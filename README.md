@@ -1,4 +1,4 @@
-# 🌀 Lense-Thirring Effect Visualization with ManimGL
+# 🌀 Lense-Thirring Effect Visualization with ManimGL and Manim-Slides ([Presentation](https://mar511n.github.io/lense-thirring-effekt))
 
 [![License](https://img.shields.io/github/license/mar511n/lense-thirring-effekt)](https://github.com/mar511n/lense-thirring-effekt/blob/main/LICENSE)
 [![Manim Version](https://img.shields.io/badge/Manim-GL-blue)](https://github.com/3b1b/manim)
@@ -64,6 +64,7 @@ lense-thirring-effekt/
 ## 📸 Preview
 
 ![Frame Dragging Animation](renders/preview.gif)
+
 *Visualization of geodesics and metric in curved space*
 
 ---
