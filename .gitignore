@@ -18,6 +18,9 @@ venv/
 /python/cache
 /python/.vscode
 *.code-workspace
+/python/videos
+/python/slides
+/python/assets/spacetime_sims
 
 # Build artifacts
 /dist
