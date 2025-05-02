@@ -85,8 +85,8 @@ class LenseThirringGL(Slide):
         #kwargs['leave_progress_bars'] = True
         kwargs['camera_config'] = {'background_color':BACKCOL}
         kwargs['camera_config']['light_source_position'] = np.array([10, -10, 10])
-        kwargs['start_at_animation_number'] = 18
-        kwargs['end_at_animation_number'] = 22
+        #kwargs['start_at_animation_number'] = 18
+        #kwargs['end_at_animation_number'] = 22
         print(kwargs)
         super().__init__(*args, **kwargs)
         if self.high_quality:

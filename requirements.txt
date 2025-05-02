@@ -1,0 +1,5 @@
+manimlib
+manim-slides
+numpy
+scipy
+matplotlib
