@@ -24,7 +24,9 @@ A visual exploration of the **Lense-Thirring effect** (frame-dragging in general
 
 ## 🛠️ Setup & Usage
 
-### Prerequisites
+See [Presentation](https://mar511n.github.io/lense-thirring-effekt) for the interactive presentation.
+
+### Rendering prerequisites
 - Python 3.8+
 - [ManimGL](https://github.com/3b1b/manim) (`pip install manimlib`)
 - [Manim-Slides](https://github.com/jeertmans/manim-slides) (`pip install "manim-slides[manimgl]"`)
@@ -61,7 +63,7 @@ lense-thirring-effekt/
 
 ## 📸 Preview
 
-![Frame Dragging Animation](renders/preview.mp4)
+![Frame Dragging Animation](renders/preview.gif)
 *Visualization of geodesics and metric in curved space*
 
 ---
