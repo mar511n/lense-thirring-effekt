@@ -51,6 +51,7 @@ lense-thirring-effekt/
 ├── python/             # all files for manim and the presentation (hauptseminar_gl.py)
 ├── Abstract/           # Latex code & PDF for an abstract
 ├── papers/           	# interesting papers
+├── index.html			# the presentation in html format
 ├── .gitignore
 ├── LICENSE
 └── README.md
