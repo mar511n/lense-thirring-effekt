@@ -1,0 +1,25 @@
+# Environment files
+.env
+.env.local
+.env.development
+.env.test
+.env.production
+
+# Python
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+
+# custom
+/python/cache
+/python/.vscode
+*.code-workspace
+
+# Build artifacts
+/dist
+/build
+/out
