@@ -1,9 +1,10 @@
 # 🌀 Lense-Thirring Effect Visualization with ManimGL
 
-[![License](https://img.shields.io/github/license/yourusername/yourrepo)](https://github.com/yourusername/yourrepo/blob/main/LICENSE)
+[![License](https://img.shields.io/github/license/mar511n/lense-thirring-effekt)](https://github.com/mar511n/lense-thirring-effekt/blob/main/LICENSE)
 [![Manim Version](https://img.shields.io/badge/Manim-GL-blue)](https://github.com/3b1b/manim)
+[![Manim Version](https://img.shields.io/badge/Manim-Slides-blue)](https://github.com/jeertmans/manim-slides)
 
-A visual exploration of the **Lense-Thirring effect** (frame-dragging in general relativity) using [ManimGL](https://github.com/3b1b/manim). This repository contains code for creating animated explanations of relativistic spacetime effects, along with supporting simulations.
+A visual exploration of the **Lense-Thirring effect** (frame-dragging in general relativity) using [ManimGL](https://github.com/3b1b/manim) and [Manim-Slides](https://github.com/jeertmans/manim-slides). This repository contains code for a manim-slides presentation with animated explanations of relativistic spacetime effects, along with supporting simulations.
 
 ---
 
@@ -26,30 +27,32 @@ A visual exploration of the **Lense-Thirring effect** (frame-dragging in general
 ### Prerequisites
 - Python 3.8+
 - [ManimGL](https://github.com/3b1b/manim) (`pip install manimlib`)
-- `manim-slides`, `numpy`, `scipy`, `matplotlib`
+- [Manim-Slides](https://github.com/jeertmans/manim-slides) (`pip install "manim-slides[manimgl]"`)
+- `numpy`, `scipy`, `matplotlib`
 
 
 ### Rendering Animations
 ```bash
-# Example: Render the frame-dragging animation
-manim -pql lense_thirring_scenes.py FrameDraggingScene
+# Example: Render the whole presentation
+./build_show_presentation.sh
 
-# Available scenes:
-# - KerrSpacetimeScene
-# - GyroscopePrecessionScene
-# - GravitomagnetismScene
+# Available scene:
+# - LenseThirringGL
+# use the start_at_animation_number and end_at_animation_number to render subsections
 ```
 
 ---
 
 ## 📁 Project Structure
 ```
-yourrepo/
-├── animations/          # ManimGL scene scripts
-├── simulations/         # Python calculation modules
-├── assets/              # SVG/MathTex assets
-├── renders/             # Output video directory (gitignored)
-├── .gitignore           # Standard Python + Manim ignores
+lense-thirring-effekt/
+├── renders/			# complete renders of the presentation
+├── Mathematica/        # Mathematica code for some simulations & calculations
+├── python/             # all files for manim and the presentation (hauptseminar_gl.py)
+├── Abstract/           # Latex code & PDF for an abstract
+├── papers/           	# interesting papers
+├── .gitignore
+├── LICENSE
 └── README.md
 ```
 
@@ -57,8 +60,8 @@ yourrepo/
 
 ## 📸 Preview
 
-![Frame Dragging Animation](assets/preview.gif)
-*Visualization of spacetime frame-dragging near a rotating black hole*
+![Frame Dragging Animation](renders/preview.mp4)
+*Visualization of geodesics and metric in curved space*
 
 ---
 
