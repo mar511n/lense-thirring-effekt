@@ -11,24 +11,25 @@ import re
 
 """
 Strukturierung:
-
+ ✓  Titelfolie
+ ?  Teaser folie
+ ✓  Inhaltsverzeichnis
  ✓  Einleitende Dinge zu ART (Geodäten & Metrik, Einsteingl. -> Metrik)
  ✓      Animation von gekrümmter Fläche, Metrik an einem Punkt, Geodäte
-(✓)     Wie bestimmt man die Metrik?? -> EFG (Problem: nichtlinear, gekoppelt)
+(✓)     Wie bestimmt man die Metrik?? -> EFG (Problem: nichtlinear, ableitungen von g)
     Linearisierung Einsteingl. (Annahme h<<1 & tau=t & v<<c sagen und g=mu + h)
-        resultierende Gl. <-> e-dynamik (erst maxwell, dann Coulomb-Kraft (ersetzen der B,E Felder))
+        resultierende Gl. <-> Maxwell-Gl. (Kopplung Materie -> Metrik)
+        Bewegungsgleichung aus Geodätengleichung (Kopplung Metrik -> Materie)
     Problem einer rotierenden Kugelmasse (dichte und stromdichte hinschreiben) (sagen, dass Lösung wie schon in E-dynamik is)
-        Darstellung der E,B Felder
-        ((Darstellung der Trajektorien (ist schwierig/nicht machbar, da die Auslenkungen nicht sichtbar sind)))
-?       Alternative Darstellung über die Raumzeit (auch schwierig)
-?   Gravity Probe B
-    Paper 1
-    Paper 2
-
-1 teaser
-2 inhaltsverzeichnis
-3 inhalt
+(✓)     Darstellung der E,B Felder (gilt auch für nicht homogene Objekte mit Drehimpuls)
+        Darstellung der Trajektorien
+        Alternative Darstellung über die Raumzeit
+        Herleitung & Darstellung Präzession
+    Gravity Probe B
+    Akkretionsscheibe
+    Pulsar
 """
+
 PresentationTitle = 'Lense-Thirring-Effekt'
 PresentationInfo = r"""
 {
@@ -258,9 +259,9 @@ class LenseThirringGL(Slide):
 
         #   Animation euklidischer Raum (14)
         self.add(dot)
-        camRot.startUpdating()
+        #camRot.startUpdating()
         self.play(MoveAlongPath(dot,pcd_nc), run_time=4.0,rate_func=linear)
-        camRot.stopUpdating()
+        #camRot.stopUpdating()
         self.remove(dot)
         self.pause(auto_next=True)
 
@@ -288,9 +289,9 @@ class LenseThirringGL(Slide):
 
         metric.add_updater(m_update)
         self.add(dot)
-        camRot.startUpdating()
+        #camRot.startUpdating()
         self.play(MoveAlongPath(dot,pcd), run_time=4.0,rate_func=linear)
-        camRot.stopUpdating()
+        #camRot.stopUpdating()
         self.pause()
 
 
@@ -307,9 +308,14 @@ class LenseThirringGL(Slide):
         for itm in itms:
             self.play(Write(itm[0]))
             self.pause()
+        
 
-        # EM-Felder (22-27)
-        #   Formeln (22-23)
+        # Linearisierung & Gravitoelektromagnetismus (25)
+        #self.setup_new_slide(title='Linearisierung',cleanup=True)
+
+
+        # EM-Felder (25-30)
+        #   Formeln (25-26)
         self.setup_new_slide(title='EM-Felder',cleanup=True)
         bfield_formula = TexText(r'$\vec{B}=\frac{1}{r^3}\left[\vec{S} - \frac{3(\vec{S}\cdot\vec{r})}{r^2}\vec{r}\right]$')
         bfield_formula.next_to(self.slide_title.get_corner(DL), DOWN, aligned_edge=LEFT, buff=1.2*DEFAULT_MOBJECT_TO_MOBJECT_BUFF)
@@ -345,7 +351,7 @@ class LenseThirringGL(Slide):
         bfmax = np.linalg.norm(ltt.bfield(np.array([[0,0,ltt.R]])))
         efmax = np.linalg.norm(ltt.efield(np.array([[0,0,ltt.R]])))
 
-        #   B-Feld (24)
+        #   B-Feld (27)
         rs = [1, 2, 1]
         zs = [-2, 0, 2]
         phis = np.arange(0,2*np.pi,np.pi/4)
@@ -356,14 +362,14 @@ class LenseThirringGL(Slide):
         self.pause(loop=True)
 
         
-        #   B-Feld Animation (25)
+        #   B-Feld Animation (28)
         sls_b.startUpdating(timeScaleF=0.25)
         camRot.startUpdating()
         self.wait(4.0)
         self.pause(auto_next=True)
 
 
-        #   E-Feld (26)
+        #   E-Feld (29)
         sls_b.stopUpdating()
         camRot.stopUpdating()
         sls_e = mt.StreamLines(fieldf=lambda t,x: ltt.efield(np.array([x])), boundary=bounds, system_timescale=1/efmax, vmax=efmax)
@@ -371,7 +377,7 @@ class LenseThirringGL(Slide):
         self.pause(loop=True)
 
 
-        #   E-Feld Animation (27)
+        #   E-Feld Animation (30)
         sls_e.startUpdating(timeScaleF=0.25)
         camRot.startUpdating()
         self.wait(4.0)
