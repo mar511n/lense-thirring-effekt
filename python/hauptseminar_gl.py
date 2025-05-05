@@ -12,9 +12,9 @@ import re
 """
 Strukturierung:
 
-    Einleitende Dinge zu ART (Geodäten & Metrik, Einsteingl. -> Metrik)
-        Animation von gekrümmter Fläche, Metrik an einem Punkt, Geodäte
-        Wie bestimmt man die Metrik?? -> EFG (Problem: nichtlinear, gekoppelt)
+ ✓  Einleitende Dinge zu ART (Geodäten & Metrik, Einsteingl. -> Metrik)
+ ✓      Animation von gekrümmter Fläche, Metrik an einem Punkt, Geodäte
+(✓)     Wie bestimmt man die Metrik?? -> EFG (Problem: nichtlinear, gekoppelt)
     Linearisierung Einsteingl. (Annahme h<<1 & tau=t & v<<c sagen und g=mu + h)
         resultierende Gl. <-> e-dynamik (erst maxwell, dann Coulomb-Kraft (ersetzen der B,E Felder))
     Problem einer rotierenden Kugelmasse (dichte und stromdichte hinschreiben) (sagen, dass Lösung wie schon in E-dynamik is)
@@ -78,6 +78,10 @@ class Integer(Integer):
         kwargs = default_kwargs_vmobj | kwargs
         super().__init__(number, num_decimal_places, **kwargs)
 
+class Write(Write):
+    def __init__(self, vmobject, run_time = 0.5, lag_ratio = -1, rate_func = linear, stroke_color = None, **kwargs):
+        super().__init__(vmobject, run_time, lag_ratio, rate_func, stroke_color, **kwargs)
+
 class LenseThirringGL(Slide):
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         self.high_quality = False
@@ -86,7 +90,7 @@ class LenseThirringGL(Slide):
         kwargs['camera_config'] = {'background_color':BACKCOL}
         kwargs['camera_config']['light_source_position'] = np.array([10, -10, 10])
         #kwargs['start_at_animation_number'] = 18
-        #kwargs['end_at_animation_number'] = 22
+        #kwargs['end_at_animation_number'] = 25
         print(kwargs)
         super().__init__(*args, **kwargs)
         if self.high_quality:
@@ -114,9 +118,12 @@ class LenseThirringGL(Slide):
             r'{p}':RED,
             r'{g}':YELLOW_D,
             r'\bm{g}':YELLOW_D,
-            r'{u}':DARK_BROWN,
+            r'{u}':GREEN_C,
             r'{v}':LIGHT_BROWN,
-            r'\Gamma':PURPLE_D
+            r'\Gamma':PURPLE_D,
+            r'{ R }':GREEN_C,
+            r'{R}':LIGHT_BROWN,
+            r'{T}':RED
         }
         #   function to align Mobjs on the left below the title
         def align_mobjs(mobjs):
@@ -191,7 +198,7 @@ class LenseThirringGL(Slide):
         self.slide_number = Integer(1, font_size=CONTENT_FONT_SIZE*0.6).to_corner(DR,buff=MED_SMALL_BUFF)
         self.slide_number.fix_in_frame()
         self.canvas_objs.append(self.slide_number)
-        self.play(FadeOut(presentation_info),FadeOut(TextBox),FadeOut(background_render), Write(contact_info,run_time=0.5), Write(presentation_title,run_time=0.5), Write(self.slide_number,run_time=0.5), self.slide_title.animate.to_corner(UL))
+        self.play(FadeOut(presentation_info),FadeOut(TextBox),FadeOut(background_render), Write(contact_info), Write(presentation_title), Write(self.slide_number), self.slide_title.animate.to_corner(UL))
         self.pause()
 
 
@@ -200,7 +207,7 @@ class LenseThirringGL(Slide):
         Inhalt.to_edge(LEFT)
         Inhalt.fix_in_frame()
         for istr in range(len(PresentationContents)):
-            self.play(Write(Inhalt[istr],run_time=0.5))
+            self.play(Write(Inhalt[istr]))
             if istr < len(PresentationContents)-1:
                 self.pause()
         self.pause()
@@ -287,23 +294,19 @@ class LenseThirringGL(Slide):
         self.pause()
 
 
-        # EFGl mit Analogie 2D Fläche eingebettet in 3D Raum -> 4D Fläche (18-21)
+        # EFGl mit Analogie 2D Fläche eingebettet in 3D Raum -> 4D Fläche (18-24)
         self.setup_new_slide(title='Einsteinsche Feldgleichungen',cleanup=True)
         text1 = TexText(r'2D Fläche $\rightarrow$ 4D Mannigfaltigkeit')
         text2 = TexText(r'Koordinaten $(ct,x,y,z)$ $\Rightarrow$ $\bm{g}\in\mathbb{R}^{4\times 4}$',isolate=[r'\bm{g}']).set_color_by_tex_to_color_map(symCols,only_isolated=True)
-        efe = TexText(r'Feldgleichungen: ',r'$R_{\mu \nu} - \frac{1}{2} {g}_{\mu \nu} R = \frac{8 \pi G}{c^4} T_{\mu \nu}$',isolate=[r'\bm{g}']).set_color_by_tex_to_color_map(symCols,only_isolated=True)
-        itms = [(text1,),(text2,),(efe,)]
+        efe = TexText(r'Feldgleichungen: ',r'${ R }_{\mu \nu} - \frac{1}{2} {g}_{\mu \nu} {R} = \frac{8 \pi G}{c^4} {T}_{\mu \nu}$',isolate=[r'{g}',r'\bm{g}',r'{ R }',r'{R}', r'{T}']).set_color_by_tex_to_color_map(symCols,only_isolated=True)
+        RicciT = TexText(r'Ricci-Tensor: ',r'${ R }_{\mu \nu}\left[\bm{g}\right]$',isolate=[r'{g}',r'\bm{g}',r'{ R }',r'{R}', r'{T}']).set_color_by_tex_to_color_map(symCols,only_isolated=True)
+        KrmmS = TexText(r'Krümmungsskalar: ',r'${R}\left[\bm{g}\right]$',isolate=[r'{g}',r'\bm{g}',r'{ R }',r'{R}', r'{T}']).set_color_by_tex_to_color_map(symCols,only_isolated=True)
+        EnImpT = TexText(r'Energie-Impuls-Tensor: ',r'${T}_{\mu \nu}$',isolate=[r'{g}',r'\bm{g}',r'{ R }',r'{R}', r'{T}']).set_color_by_tex_to_color_map(symCols,only_isolated=True)
+        itms = [(text1,),(text2,),(efe,),(RicciT,),(KrmmS,),(EnImpT,)]
         align_mobjs(itms)
-        self.play(Write(text1))
-        self.pause()
-
-
-        self.play(Write(text2))
-        self.pause()
-
-
-        self.play(Write(efe))
-        self.pause()
+        for itm in itms:
+            self.play(Write(itm[0]))
+            self.pause()
 
         # EM-Felder (22-27)
         #   Formeln (22-23)
@@ -314,7 +317,7 @@ class LenseThirringGL(Slide):
         efield_formula = TexText(r'$\vec{E}=-\frac{M \vec{r}}{r^3}$')
         efield_formula.next_to(bfield_formula.get_corner(DL), DOWN, aligned_edge=LEFT, buff=DEFAULT_MOBJECT_TO_MOBJECT_BUFF)
         efield_formula.fix_in_frame()
-        self.play(Write(bfield_formula,run_time=0.5),Write(efield_formula,run_time=0.5))
+        self.play(Write(bfield_formula),Write(efield_formula))
         self.pause(auto_next=True)
         
 
