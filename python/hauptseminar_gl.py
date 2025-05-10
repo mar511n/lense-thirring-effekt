@@ -14,12 +14,12 @@ Strukturierung:
  ✓  Titelfolie
  ?  Teaser folie
  ✓  Inhaltsverzeichnis
- ✓  Einleitende Dinge zu ART (Geodäten & Metrik, Einsteingl. -> Metrik)
+ ✓  Einleitende Dinge zu ART (Geodäten & Metrik, Einsteingl. -> Metrik) (sagen, dass Geodäten lokal den Weg minimieren & aus Funktional der Länge hergeleitet werden können)
  ✓      Animation von gekrümmter Fläche, Metrik an einem Punkt, Geodäte
-(✓)     Wie bestimmt man die Metrik?? -> EFG (Problem: nichtlinear, ableitungen von g)
-    Linearisierung Einsteingl. (Annahme h<<1 & tau=t & v<<c sagen und g=mu + h)
-        resultierende Gl. <-> Maxwell-Gl. (Kopplung Materie -> Metrik)
-        Bewegungsgleichung aus Geodätengleichung (Kopplung Metrik -> Materie)
+ ✓      Wie bestimmt man die Metrik?? -> EFG (Problem: nichtlinear, ableitungen von g)
+ ✓  Linearisierung Einsteingl. (Annahme h<<1 & tau=t & v<<c sagen und g=mu + h)
+ ✓      resultierende Gl. <-> Maxwell-Gl. (Kopplung Materie -> Metrik)
+ ✓      Bewegungsgleichung aus Geodätengleichung (Kopplung Metrik -> Materie)
     Problem einer rotierenden Kugelmasse (dichte und stromdichte hinschreiben) (sagen, dass Lösung wie schon in E-dynamik is)
 (✓)     Darstellung der E,B Felder (gilt auch für nicht homogene Objekte mit Drehimpuls)
         Darstellung der Trajektorien
@@ -35,7 +35,7 @@ PresentationInfo = r"""
 {
 Vortrag im Hauptseminar SoSe 2025 \\
 Marvin Henke - \today \\
-Betreuer: Dr. Nikodem Szpak \\
+Betreuer: Dr. Nikodem Szpak\\
 }
 """
 PresentationContactInfo = 'marvin.henke@stud.uni-due.de'
@@ -90,8 +90,8 @@ class LenseThirringGL(Slide):
         #kwargs['leave_progress_bars'] = True
         kwargs['camera_config'] = {'background_color':BACKCOL}
         kwargs['camera_config']['light_source_position'] = np.array([10, -10, 10])
-        #kwargs['start_at_animation_number'] = 18
-        #kwargs['end_at_animation_number'] = 25
+        #kwargs['start_at_animation_number'] = 25
+        #kwargs['end_at_animation_number'] = 30
         print(kwargs)
         super().__init__(*args, **kwargs)
         if self.high_quality:
@@ -115,24 +115,34 @@ class LenseThirringGL(Slide):
         self.camera.uniforms['shift_screen_space'] = self.offset_3d
         #   predefined colors for certain tex parts
         symCols = {
-            r'\vec{r}':BLUE_D,
-            r'{p}':RED,
+            r'\vec{ x }':BLUE_D,
+            r'{x}':BLUE_D,
             r'{g}':YELLOW_D,
             r'\bm{g}':YELLOW_D,
+            r'{h}':YELLOW_B,
             r'{u}':GREEN_C,
             r'{v}':LIGHT_BROWN,
-            r'\Gamma':PURPLE_D,
+            r'\Gamma':PURPLE_C,
             r'{ R }':GREEN_C,
             r'{R}':LIGHT_BROWN,
-            r'{T}':RED
+            r'{T}':RED,
+            r'\vec{ F }':GOLD_C,
+            r'\vec{ E }':YELLOW_B,
+            r'\vec{ B }':YELLOW_B,
+            r'{B}':YELLOW_B,
+            r'\vec{ v }':BLUE_B,
+            r'{m}':WHITE
         }
         #   function to align Mobjs on the left below the title
-        def align_mobjs(mobjs):
+        def align_mobjs(mobjs,tomobj,center=False):
             for i,mobjl in enumerate(mobjs):
-                last = mobjs[i-1][0] if i>0 else self.slide_title
+                last = mobjs[i-1][0] if i>0 else tomobj
                 for mobj in mobjl:
                     mobj.fix_in_frame()
-                    mobj.next_to(last.get_corner(DL),DOWN,aligned_edge=LEFT)
+                    if not center:
+                        mobj.next_to(last.get_corner(DL),DOWN,aligned_edge=LEFT)
+                    else:
+                        mobj.next_to(last.get_corner(DOWN),DOWN,aligned_edge=ORIGIN)
         #   call let_obj_face_cam on a mobj to make it face the camera
         def face_camera(mob:Mobject, dt):
             newtheta = self.frame.get_theta()
@@ -220,25 +230,25 @@ class LenseThirringGL(Slide):
 
         #   Euklidisch (10-13)
         fläche_text = TexText(r'Fläche')
-        rfunc = TexText(r'$\vec{r} : \mathbb{R}^2 \rightarrow \mathbb{R}^3$',isolate=[r'\vec{r}']).set_color_by_tex_to_color_map(symCols)
-        rfunc_euclid = TexText(r'$\vec{r}({u},{v}) = ({u},{v},0)$',isolate=[r'{u}',r'{v}',r'\vec{r}']).set_color_by_tex_to_color_map(symCols)
+        rfunc = TexText(r'$\vec{ x } : \mathbb{R}^2 \rightarrow \mathbb{R}^3$',isolate=[r'\vec{ x }']).set_color_by_tex_to_color_map(symCols)
+        rfunc_euclid = TexText(r'$\vec{ x }({u},{v}) = ({u},{v},0)$',isolate=[r'{u}',r'{v}',r'\vec{ x }']).set_color_by_tex_to_color_map(symCols)
         metrik_text = TexText(r'Metrik').fix_in_frame()
-        g_tensor = TexText(r'${g}_{\mu \nu} = \partial_{\mu} \vec{r}\cdot\partial_{\nu} \vec{r}$', isolate=[r'{g}', r'\vec{r}']).set_color_by_tex_to_color_map(symCols)
+        g_tensor = TexText(r'${g}_{\mu \nu} = \partial_{\mu} \vec{ x }\cdot\partial_{\nu} \vec{ x }$', isolate=[r'{g}', r'\vec{ x }']).set_color_by_tex_to_color_map(symCols)
         g_euclid = VGroup(TexText(r'$\bm{g} = $',isolate=r'\bm{g}').set_color_by_tex_to_color_map(symCols,only_isolated=True),TexText(r'$\left[\begin{array}{c}1 \quad 0 \\0 \quad 1 \\\end{array}\right]$')).arrange()
         geod_gl_text = TexText(r'Geodätengleichung')
-        geod_gl_t1 = TexText(r'$\frac{\mathrm{d}^2 {p}^{\lambda}}{\mathrm{d} \tau^2} = $',isolate=[r'{p}']).set_color_by_tex_to_color_map(symCols)
-        geod_gl_t2 = TexText(r'$-\Gamma^{\lambda}_{\mu \nu}[\bm{g}(\vec{r})] \frac{\mathrm{d} {p}^{\mu}}{\mathrm{d} \tau} \frac{\mathrm{d} {p}^{\nu}}{\mathrm{d} \tau}$',isolate=[r'{p}',r'\bm{g}',r'\vec{r}',r'\Gamma']).set_color_by_tex_to_color_map(symCols,only_isolated=True)
+        geod_gl_t1 = TexText(r'$\frac{\mathrm{d}^2 {x}^{\lambda}}{\mathrm{d} \tau^2} = $',isolate=[r'{x}']).set_color_by_tex_to_color_map(symCols)
+        geod_gl_t2 = TexText(r'$-\Gamma^{\lambda}_{\mu \nu}[\bm{g}(\vec{ x })] \frac{\mathrm{d} {x}^{\mu}}{\mathrm{d} \tau} \frac{\mathrm{d} {x}^{\nu}}{\mathrm{d} \tau}$',isolate=[r'{x}',r'\bm{g}',r'\vec{ x }',r'\Gamma']).set_color_by_tex_to_color_map(symCols,only_isolated=True)
         geod_gl_eucild = VGroup(geod_gl_t1.copy(),TexText(r'$0$')).arrange()
         geod_gl = VGroup(geod_gl_t1,geod_gl_t2).arrange()
         itms = [(fläche_text,),(rfunc,rfunc_euclid),(metrik_text,),(g_tensor,),(g_euclid,),(geod_gl_text,),(geod_gl_eucild,geod_gl)]
-        align_mobjs(itms)
+        align_mobjs(itms, self.slide_title)
 
         ltt.set_params_gaußian_surface(1/np.sqrt(2),A=0.0)
         grid_nc,_ = mt.get_grid_surface(uv_func=lambda u,v: [u,v,v*0], u_range=(-3,3), v_range=(-3,3), grid_size=(8,8), grid_col=FRONTCOL)
         ts,zs = ltt.get_geodesic(6, np.array([3,0.5,-1,0]),tol=1e-9,accF=ltt.acc_gaußian_surface,check_break=lambda t,r: np.abs(r[0])>3 or np.abs(r[1])>3)
         pcd_nc = mt.CurveDrawer([mt.ParametricCurve(ts,[[uv[0],uv[1],0] for uv in zs[:,:2]])],fixed_color=ORANGE)
         pcd_nc.update_graphics()
-        dot = Sphere(radius=0.05,color=RED,shading=(0,0,0)).apply_depth_test()
+        dot = Sphere(radius=0.05,color=symCols[r'\vec{ x }'],shading=(0,0,0)).apply_depth_test()
         u_label = TexText(r'${u}$').next_to(grid_nc.get_bottom(),DOWN).set_color_by_tex_to_color_map(symCols)
         v_label = TexText(r'${v}$').next_to(grid_nc.get_left(),LEFT).set_color_by_tex_to_color_map(symCols)
         self.play(Write(grid_nc), Write(pcd_nc), Write(u_label), Write(v_label))
@@ -295,27 +305,64 @@ class LenseThirringGL(Slide):
         self.pause()
 
 
-        # EFGl mit Analogie 2D Fläche eingebettet in 3D Raum -> 4D Fläche (18-24)
+        # EFGl mit Analogie 2D Fläche eingebettet in 3D Raum -> 4D Fläche (18-25)
         self.setup_new_slide(title='Einsteinsche Feldgleichungen',cleanup=True)
         text1 = TexText(r'2D Fläche $\rightarrow$ 4D Mannigfaltigkeit')
         text2 = TexText(r'Koordinaten $(ct,x,y,z)$ $\Rightarrow$ $\bm{g}\in\mathbb{R}^{4\times 4}$',isolate=[r'\bm{g}']).set_color_by_tex_to_color_map(symCols,only_isolated=True)
-        efe = TexText(r'Feldgleichungen: ',r'${ R }_{\mu \nu} - \frac{1}{2} {g}_{\mu \nu} {R} = \frac{8 \pi G}{c^4} {T}_{\mu \nu}$',isolate=[r'{g}',r'\bm{g}',r'{ R }',r'{R}', r'{T}']).set_color_by_tex_to_color_map(symCols,only_isolated=True)
+        efe = TexText(r'${ R }_{\mu \nu} - \frac{1}{2} {g}_{\mu \nu} {R} = 8 \pi{T}_{\mu \nu}$',isolate=[r'{g}',r'\bm{g}',r'{ R }',r'{R}', r'{T}'],font_size=CONTENT_FONT_SIZE*1.5).set_color_by_tex_to_color_map(symCols,only_isolated=True).fix_in_frame()
         RicciT = TexText(r'Ricci-Tensor: ',r'${ R }_{\mu \nu}\left[\bm{g}\right]$',isolate=[r'{g}',r'\bm{g}',r'{ R }',r'{R}', r'{T}']).set_color_by_tex_to_color_map(symCols,only_isolated=True)
         KrmmS = TexText(r'Krümmungsskalar: ',r'${R}\left[\bm{g}\right]$',isolate=[r'{g}',r'\bm{g}',r'{ R }',r'{R}', r'{T}']).set_color_by_tex_to_color_map(symCols,only_isolated=True)
         EnImpT = TexText(r'Energie-Impuls-Tensor: ',r'${T}_{\mu \nu}$',isolate=[r'{g}',r'\bm{g}',r'{ R }',r'{R}', r'{T}']).set_color_by_tex_to_color_map(symCols,only_isolated=True)
         itms = [(text1,),(text2,),(efe,),(RicciT,),(KrmmS,),(EnImpT,)]
-        align_mobjs(itms)
+        align_mobjs(itms[:2],self.slide_title)
+        # efe.move_to((FRAME_WIDTH/2,FRAME_HEIGHT/2,0))
+        efe.center()
+        align_mobjs(itms[3:],efe,center=True)
         for itm in itms:
-            self.play(Write(itm[0]))
             self.pause()
+            self.play(Write(itm[0]))
+        self.pause()
         
 
-        # Linearisierung & Gravitoelektromagnetismus (25)
-        #self.setup_new_slide(title='Linearisierung',cleanup=True)
+        # Linearisierung & Gravitoelektromagnetismus (25-29)
+        self.setup_new_slide(title='Linearisierung',cleanup=True)
+        geod_gl = TexText(r'$\frac{\mathrm{d}^2 {x}^{\lambda}}{\mathrm{d} \tau^2} = -\Gamma^{\lambda}_{\mu \nu}[\bm{g}(\vec{ x })] \frac{\mathrm{d} {x}^{\mu}}{\mathrm{d} \tau} \frac{\mathrm{d} {x}^{\nu}}{\mathrm{d} \tau}$',isolate=[r'{x}',r'\bm{g}',r'\vec{ x }',r'\Gamma']).set_color_by_tex_to_color_map(symCols,only_isolated=True).fix_in_frame()
+        efe = TexText(r'${ R }_{\mu \nu} - \frac{1}{2} {g}_{\mu \nu} {R} = 8 \pi {T}_{\mu \nu}$',isolate=[r'{g}',r'\bm{g}',r'{ R }',r'{R}', r'{T}']).set_color_by_tex_to_color_map(symCols,only_isolated=True).fix_in_frame()
+        approxs = TexText(r'Annahmen: ', r'${g}_{\mu \nu} = \eta_{\mu \nu} + {h}_{\mu \nu}$, $\bm{h} \ll \bm{\eta}$, $\tau \approx t$',isolate=[r'{g}',r'\bm{g}',r'{h}',r'\bm{h}']).set_color_by_tex_to_color_map(symCols,only_isolated=True).fix_in_frame()
+        fields = TexText(r'Substitutionen: ',r'$\vec{ E }=\frac{1}{2}\vec{\nabla} {h}_{00}$, ${B}_j=-\varepsilon_{jlm}\frac{\partial {h}_{0m}}{\partial {x}^l}$',isolate=[r'\vec{ E }',r'{h}',r'{x}',r'{B}']).set_color_by_tex_to_color_map(symCols,only_isolated=True).fix_in_frame()
+        geod_gl_l1 = TexText(r'$\frac{d^2 {x}^{i}}{{dt}^2} = -\frac{1}{2}\frac{\partial {h}_{00}}{\partial {x}^i} + \varepsilon_{ijk}\varepsilon_{jlm}\frac{\partial {h}_{0m}}{\partial {x}^l}\frac{d {x}^k}{dt}$',isolate=[r'{x}',r'\bm{g}', r'{h}']).set_color_by_tex_to_color_map(symCols,only_isolated=True).fix_in_frame()
+        geod_gl_l2 = TexText(r'$\vec{ F } = {m} \left( \vec{ E } + \vec{ v }\times\vec{ B } \right)$',isolate=[r'\vec{ F }', r'{m}',r'\vec{ E }', r'\vec{ v }', r'\vec{ B }']).set_color_by_tex_to_color_map(symCols,only_isolated=True).fix_in_frame()
+        efe_l1 = TexText(r'$-\Delta {h}_{00} = 8\pi\rho$, $-\Delta {h}_{0i} = 8\pi j_i$',isolate=[r'{h}']).set_color_by_tex_to_color_map(symCols,only_isolated=True).fix_in_frame()
+        efe_l2 = TexText(r'$\vec{\nabla}\cdot\vec{ E } = - 4 \pi \rho$',isolate=[r'\vec{ E }', r'\vec{ B }']).set_color_by_tex_to_color_map(symCols,only_isolated=True).fix_in_frame()
+        efe_l3 = TexText(r'$\vec{\nabla}\cdot\vec{ B } = 0$',isolate=[r'\vec{ E }', r'\vec{ B }']).set_color_by_tex_to_color_map(symCols,only_isolated=True).fix_in_frame()
+        efe_l4 = TexText(r'$\vec{\nabla}\times\vec{ E } = 0$',isolate=[r'\vec{ E }', r'\vec{ B }']).set_color_by_tex_to_color_map(symCols,only_isolated=True).fix_in_frame()
+        efe_l5 = TexText(r'$\vec{\nabla}\times\vec{ B } = -8 \pi \vec{j}$',isolate=[r'\vec{ E }', r'\vec{ B }']).set_color_by_tex_to_color_map(symCols,only_isolated=True).fix_in_frame()
+        align_mobjs([(approxs,),(fields,),(efe,)],self.slide_title)
+        efe.shift(DOWN*MED_SMALL_BUFF)
+        align_mobjs([(efe_l1,),(efe_l2,)],efe)
+        efe_l2.shift(DOWN*MED_SMALL_BUFF)
+        align_mobjs([(efe_l3,),(efe_l4,),(efe_l5,)],efe_l2)
+        geod_gl.next_to((0,efe.get_edge_center(TOP)[1],0),RIGHT,aligned_edge=UP)
+        align_mobjs([(geod_gl_l1,),(geod_gl_l2,)],geod_gl)
+        geod_gl_l2.shift(DOWN*MED_LARGE_BUFF*2)
+        self.play(Write(approxs),Write(efe),Write(geod_gl))
+        self.pause()
+        
+
+        self.play(Write(efe_l1),Write(fields))
+        self.pause()
 
 
-        # EM-Felder (25-30)
-        #   Formeln (25-26)
+        self.play(Write(efe_l2),Write(efe_l3),Write(efe_l4),Write(efe_l5))
+        self.pause()
+
+
+        self.play(Write(geod_gl_l1),Write(geod_gl_l2))
+        self.pause()
+
+
+        # EM-Felder (30-35)
+        #   Formeln (30-31)
         self.setup_new_slide(title='EM-Felder',cleanup=True)
         bfield_formula = TexText(r'$\vec{B}=\frac{1}{r^3}\left[\vec{S} - \frac{3(\vec{S}\cdot\vec{r})}{r^2}\vec{r}\right]$')
         bfield_formula.next_to(self.slide_title.get_corner(DL), DOWN, aligned_edge=LEFT, buff=1.2*DEFAULT_MOBJECT_TO_MOBJECT_BUFF)
@@ -351,7 +398,7 @@ class LenseThirringGL(Slide):
         bfmax = np.linalg.norm(ltt.bfield(np.array([[0,0,ltt.R]])))
         efmax = np.linalg.norm(ltt.efield(np.array([[0,0,ltt.R]])))
 
-        #   B-Feld (27)
+        #   B-Feld (32)
         rs = [1, 2, 1]
         zs = [-2, 0, 2]
         phis = np.arange(0,2*np.pi,np.pi/4)
@@ -362,14 +409,14 @@ class LenseThirringGL(Slide):
         self.pause(loop=True)
 
         
-        #   B-Feld Animation (28)
+        #   B-Feld Animation (33)
         sls_b.startUpdating(timeScaleF=0.25)
         camRot.startUpdating()
         self.wait(4.0)
         self.pause(auto_next=True)
 
 
-        #   E-Feld (29)
+        #   E-Feld (34)
         sls_b.stopUpdating()
         camRot.stopUpdating()
         sls_e = mt.StreamLines(fieldf=lambda t,x: ltt.efield(np.array([x])), boundary=bounds, system_timescale=1/efmax, vmax=efmax)
@@ -377,7 +424,7 @@ class LenseThirringGL(Slide):
         self.pause(loop=True)
 
 
-        #   E-Feld Animation (30)
+        #   E-Feld Animation (35)
         sls_e.startUpdating(timeScaleF=0.25)
         camRot.startUpdating()
         self.wait(4.0)
