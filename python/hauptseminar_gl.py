@@ -39,7 +39,14 @@ Betreuer: Dr. Nikodem Szpak\\
 }
 """
 PresentationContactInfo = 'marvin.henke@stud.uni-due.de'
-PresentationContents = ('Metrik und Geodäten', 'Einsteinsche Feldgleichungen', 'Gravitoelektromagnetismus', 'Rotierende Kugelmasse', 'EM-Felder', 'Gravity Probe B', 'Paper')
+PresentationContents = (
+    (0, 'Metrik und Geodäten'),
+    (0, 'Einsteinsche Feldgleichungen'),
+    (0, 'Gravitoelektromagnetismus'),
+    (1, 'Rotierende Kugelmasse'),
+    (1, 'EM-Felder'),
+    (0, 'Gravity Probe B'),
+    (0, 'Paper'))
 
 DARK_MODE: bool = True
 LIGHT_MODE: bool = False # highly experimental
@@ -69,10 +76,39 @@ class TexText(TexText):
         kwargs = default_kwargs_text | default_kwargs_vmobj | kwargs
         super().__init__(*tex_strings, font_size=font_size, alignment=alignment, template=template, additional_preamble=additional_preamble, tex_to_color_map=tex_to_color_map, t2c=t2c, isolate=isolate, use_labelled_svg=use_labelled_svg, **kwargs)
 
-class BulletedList(BulletedList):
-    def __init__(self, *items, buff = MED_LARGE_BUFF, aligned_edge = LEFT, **kwargs):
-        kwargs = default_kwargs_text | default_kwargs_vmobj | kwargs
-        super().__init__(*items, buff=buff, aligned_edge=aligned_edge, **kwargs)
+class BulletedList(VGroup):
+    def __init__(
+        self,
+        *items: str,
+        buff: float = MED_LARGE_BUFF,
+        aligned_edge = LEFT,
+        **kwargs
+    ):  
+        labelled_content = [r'\item '+item[1] for item in items]
+        tex_string = r'\begin{itemize}'+"\n"
+        ci = items[0][0]
+        for item in items:
+            if item[0] > ci:
+                tex_string += r'\begin{itemize}'+"\n"
+            elif item[0] < ci:
+                tex_string += r'\end{itemize}'+"\n"
+            tex_string += r'\item '+item[1]+"\n"
+            ci = item[0]
+        tex_string += r'\end{itemize}'
+        kwas1 = default_kwargs_text | default_kwargs_vmobj | kwargs
+        tex_text = TexText(tex_string, isolate=labelled_content, **kwas1)
+        lines = (tex_text.select_part(part) for part in labelled_content)
+
+        kwas2 = default_kwargs_vmobj | kwargs
+        super().__init__(*lines, **kwas2)
+
+        self.arrange(DOWN, buff=buff, aligned_edge=aligned_edge)
+        for i in range(len(items)):
+            self[i].shift(RIGHT*DEFAULT_MOBJECT_TO_EDGE_BUFF*items[i][0])
+
+    def fade_all_but(self, index: int, opacity: float = 0.25) -> None:
+        for i, part in enumerate(self.submobjects):
+            part.set_fill(opacity=(1.0 if i == index else opacity))
 
 class Integer(Integer):
     def __init__(self, number = 0, num_decimal_places = 0, **kwargs):
@@ -90,8 +126,8 @@ class LenseThirringGL(Slide):
         #kwargs['leave_progress_bars'] = True
         kwargs['camera_config'] = {'background_color':BACKCOL}
         kwargs['camera_config']['light_source_position'] = np.array([10, -10, 10])
-        #kwargs['start_at_animation_number'] = 25
-        #kwargs['end_at_animation_number'] = 30
+        #kwargs['start_at_animation_number'] = 34
+        #kwargs['end_at_animation_number'] = 37
         print(kwargs)
         super().__init__(*args, **kwargs)
         if self.high_quality:
@@ -213,7 +249,7 @@ class LenseThirringGL(Slide):
         self.pause()
 
 
-        # Inhaltsverzeichnis (2-8)
+        # Inhaltsverzeichnis (2-10)
         Inhalt = BulletedList(*PresentationContents, buff=MED_SMALL_BUFF)
         Inhalt.to_edge(LEFT)
         Inhalt.fix_in_frame()
@@ -223,12 +259,29 @@ class LenseThirringGL(Slide):
                 self.pause()
         self.pause()
 
-        # Metrik & Geodätengleichung (9-17)
+
+        minkmetric = TexText(r'$\bm{\eta}=\begin{bmatrix}1 & 0 & 0 & 0 \\0 & -1 & 0 & 0 \\0 & 0 & -1 & 0 \\0 & 0 & 0 & -1\end{bmatrix}$').fix_in_frame()
+        minkmetric_conv = TexText(r'$(+---)$').fix_in_frame()
+        natEinh = TexText(r'$c=G=1$').fix_in_frame()
+        minkmetric.move_to((FRAME_WIDTH/4,0,0))
+        self.play(Write(minkmetric))
+        self.pause()
+
+
+        natEinh.next_to(ude_logo.get_corner(UL),LEFT,aligned_edge=TOP)
+        minkmetric_conv.next_to(natEinh.get_corner(DR),DOWN,aligned_edge=RIGHT)
+        self.play(ReplacementTransform(minkmetric,minkmetric_conv),Write(natEinh))
+        self.canvas_objs.append(minkmetric_conv)
+        self.canvas_objs.append(natEinh)
+        self.pause()
+
+
+        # Metrik & Geodätengleichung (11-19)
         self.setup_new_slide(title='Metrik und Geodäten', cleanup=True)
         self.pause()
 
 
-        #   Euklidisch (10-13)
+        #   Euklidisch (12-15)
         fläche_text = TexText(r'Fläche')
         rfunc = TexText(r'$\vec{ x } : \mathbb{R}^2 \rightarrow \mathbb{R}^3$',isolate=[r'\vec{ x }']).set_color_by_tex_to_color_map(symCols)
         rfunc_euclid = TexText(r'$\vec{ x }({u},{v}) = ({u},{v},0)$',isolate=[r'{u}',r'{v}',r'\vec{ x }']).set_color_by_tex_to_color_map(symCols)
@@ -267,7 +320,7 @@ class LenseThirringGL(Slide):
         self.pause(loop=True)
 
 
-        #   Animation euklidischer Raum (14)
+        #   Animation euklidischer Raum (16)
         self.add(dot)
         #camRot.startUpdating()
         self.play(MoveAlongPath(dot,pcd_nc), run_time=4.0,rate_func=linear)
@@ -276,7 +329,7 @@ class LenseThirringGL(Slide):
         self.pause(auto_next=True)
 
 
-        #   Gekrümmter Raum (15-17)
+        #   Gekrümmter Raum (17-19)
         ltt.set_params_gaußian_surface(1/np.sqrt(2),A=2.0)
         _, surface = mt.get_grid_surface(uv_func=lambda u,v: [u,v,ltt.z_gaußian_surface(u,v)], u_range=(-3,3), v_range=(-3,3), grid_size=(8,8), grid_col=FRONTCOL)
         surface.set_color_by_rgba_func(lambda r: get_color_map('viridis')(r[2]/ltt.z_gaußian_surface(0,0)))
@@ -305,7 +358,7 @@ class LenseThirringGL(Slide):
         self.pause()
 
 
-        # EFGl mit Analogie 2D Fläche eingebettet in 3D Raum -> 4D Fläche (18-25)
+        # EFGl mit Analogie 2D Fläche eingebettet in 3D Raum -> 4D Fläche (20-27)
         self.setup_new_slide(title='Einsteinsche Feldgleichungen',cleanup=True)
         text1 = TexText(r'2D Fläche $\rightarrow$ 4D Mannigfaltigkeit')
         text2 = TexText(r'Koordinaten $(ct,x,y,z)$ $\Rightarrow$ $\bm{g}\in\mathbb{R}^{4\times 4}$',isolate=[r'\bm{g}']).set_color_by_tex_to_color_map(symCols,only_isolated=True)
@@ -315,7 +368,6 @@ class LenseThirringGL(Slide):
         EnImpT = TexText(r'Energie-Impuls-Tensor: ',r'${T}_{\mu \nu}$',isolate=[r'{g}',r'\bm{g}',r'{ R }',r'{R}', r'{T}']).set_color_by_tex_to_color_map(symCols,only_isolated=True)
         itms = [(text1,),(text2,),(efe,),(RicciT,),(KrmmS,),(EnImpT,)]
         align_mobjs(itms[:2],self.slide_title)
-        # efe.move_to((FRAME_WIDTH/2,FRAME_HEIGHT/2,0))
         efe.center()
         align_mobjs(itms[3:],efe,center=True)
         for itm in itms:
@@ -324,7 +376,7 @@ class LenseThirringGL(Slide):
         self.pause()
         
 
-        # Linearisierung & Gravitoelektromagnetismus (25-29)
+        # Linearisierung & Gravitoelektromagnetismus (27-33)
         self.setup_new_slide(title='Linearisierung',cleanup=True)
         geod_gl = TexText(r'$\frac{\mathrm{d}^2 {x}^{\lambda}}{\mathrm{d} \tau^2} = -\Gamma^{\lambda}_{\mu \nu}[\bm{g}(\vec{ x })] \frac{\mathrm{d} {x}^{\mu}}{\mathrm{d} \tau} \frac{\mathrm{d} {x}^{\nu}}{\mathrm{d} \tau}$',isolate=[r'{x}',r'\bm{g}',r'\vec{ x }',r'\Gamma']).set_color_by_tex_to_color_map(symCols,only_isolated=True).fix_in_frame()
         efe = TexText(r'${ R }_{\mu \nu} - \frac{1}{2} {g}_{\mu \nu} {R} = 8 \pi {T}_{\mu \nu}$',isolate=[r'{g}',r'\bm{g}',r'{ R }',r'{R}', r'{T}']).set_color_by_tex_to_color_map(symCols,only_isolated=True).fix_in_frame()
@@ -345,25 +397,41 @@ class LenseThirringGL(Slide):
         geod_gl.next_to((0,efe.get_edge_center(TOP)[1],0),RIGHT,aligned_edge=UP)
         align_mobjs([(geod_gl_l1,),(geod_gl_l2,)],geod_gl)
         geod_gl_l2.shift(DOWN*MED_LARGE_BUFF*2)
-        self.play(Write(approxs),Write(efe),Write(geod_gl))
-        self.pause()
-        
-
-        self.play(Write(efe_l1),Write(fields))
         self.pause()
 
 
-        self.play(Write(efe_l2),Write(efe_l3),Write(efe_l4),Write(efe_l5))
+        self.play(Write(approxs))
         self.pause()
 
 
-        self.play(Write(geod_gl_l1),Write(geod_gl_l2))
+        self.play(Write(efe),Write(geod_gl))
+        self.pause()
+
+
+        self.play(Write(efe_l1))
+        self.pause()
+
+
+        self.play(Write(fields),Write(efe_l2),Write(efe_l3),Write(efe_l4),Write(efe_l5),self.next_slide_title_animation('Gravitoelektromagnetismus'))
+        self.pause()
+
+
+        self.play(Write(geod_gl_l1))
+        self.pause()
+
+
+        self.play(Write(geod_gl_l2))
+        self.pause()
+
+
+        # Rotierende Kugelmasse (34-)
+        self.setup_new_slide(title='Rotierende Kugelmasse', cleanup=True)
         self.pause()
 
 
         # EM-Felder (30-35)
         #   Formeln (30-31)
-        self.setup_new_slide(title='EM-Felder',cleanup=True)
+        self.setup_new_slide(title='EM-Felder')
         bfield_formula = TexText(r'$\vec{B}=\frac{1}{r^3}\left[\vec{S} - \frac{3(\vec{S}\cdot\vec{r})}{r^2}\vec{r}\right]$')
         bfield_formula.next_to(self.slide_title.get_corner(DL), DOWN, aligned_edge=LEFT, buff=1.2*DEFAULT_MOBJECT_TO_MOBJECT_BUFF)
         bfield_formula.fix_in_frame()
