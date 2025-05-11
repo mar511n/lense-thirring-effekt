@@ -1,9 +1,9 @@
 from manimlib import *
 import numpy as np
 import scipy.integrate as spint
-import scipy.interpolate as spinter
 from scipy.spatial.transform import Rotation
 import time
+import lense_thirring_tools as ltt
 
 class CurveDrawer(VMobject):
     """
@@ -87,7 +87,7 @@ class CurveDrawer(VMobject):
 def get_grid_surface(uv_func, grid_size=(6,6), grid_resolution=(101,101), grid_col=WHITE, u_range=(0,1), v_range=(0,1), grid_off=1e-2, **kwargs):
         rs = [np.array([np.linspace(v_range[0],v_range[1],grid_resolution[1]),np.ones(grid_resolution[1])*u,np.linspace(v_range[0],v_range[1],grid_resolution[1])]) for u in np.linspace(u_range[0],u_range[1],grid_size[0]+1)]
         rs.extend([np.array([np.linspace(u_range[0],u_range[1],grid_resolution[0]),np.linspace(u_range[0],u_range[1],grid_resolution[0]),np.ones(grid_resolution[0])*v]) for v in np.linspace(v_range[0],v_range[1],grid_size[1]+1)])
-        pcs = [ParametricCurve(ps[0], np.array(uv_func(ps[1],ps[2])).T+np.array([0,0,grid_off])) for ps in rs]
+        pcs = [ltt.ParametricCurve(ps[0], np.array(uv_func(ps[1],ps[2])).T+np.array([0,0,grid_off])) for ps in rs]
         ps = ParametricSurface(uv_func, u_range, v_range, **kwargs)
         ps.apply_depth_test()
         cd = CurveDrawer(pcs, fixed_color=grid_col, stroke_width=2)
@@ -126,7 +126,7 @@ class StreamLines(CurveDrawer):
             rs = np.empty((len(rs_fw)+len(rs_bw)-1, 3))
             rs[:len(rs_bw)] = rs_bw[::-1]
             rs[len(rs_bw):] = rs_fw[1:]
-            pcs.append(ParametricCurve(ts+np.min(ts), rs))
+            pcs.append(ltt.ParametricCurve(ts+np.min(ts), rs))
             print(">",end="")
         print("\nparametric curves initialized")
         super().__init__(pcs, tip_width_ratio, arrow_base_length_factor, seg_base_size_factor, col_func, cmap, arrow_res, **kwargs)
@@ -169,58 +169,6 @@ class StreamLines(CurveDrawer):
             if rkdp.status != "running":
                 break
         return np.array(ts), np.array(rs)
-
-class ParametricCurve:
-    """
-    Class to handle operations on a parametrized curve
-    """
-
-    def __init__(self, ts, xs=None, xf=None, init_nat_param=True):
-        self.ts = np.array(ts)
-        self.tmax = np.max(self.ts)
-        self.tmin = np.min(self.ts)
-        if xf is not None:
-            self.xs = xf(self.ts)
-        elif xs is not None:
-            self.xs = np.array(xs)
-        else:
-            raise Exception("either xs or xf has to be given")
-        if init_nat_param:
-            self.init_natural_parametrization()
-    
-    def init_natural_parametrization(self):
-        l = np.append([0], np.sqrt(np.sum((self.xs[1:]-self.xs[:-1])**2,axis=1)),axis=0)
-        l = np.cumsum(l)
-        self.length = np.max(l)
-        self.l_of_t = spinter.interp1d(self.ts, l, fill_value=(
-            l[0], l[-1]), bounds_error=False, axis=0)
-        self.t_of_l = spinter.interp1d(l, self.ts, fill_value=(
-            self.ts[0], self.ts[-1]), bounds_error=False, axis=0)
-        self.x_of_l = spinter.interp1d(l, self.xs, fill_value=(
-            self.xs[0], self.xs[-1]), bounds_error=False, axis=0)
-        #self.x_of_t = spinter.interp1d(self.ts, self.xs, fill_value=(
-        #    self.xs[0], self.xs[-1]), bounds_error=False, axis=0)
-        vs = np.gradient(l, self.ts)
-        vs = np.where(np.isnan(vs), 0, vs)
-        self.vmax = np.max(vs)
-        self.vmin = np.min(vs)
-        self.v_of_l = spinter.interp1d(l, vs, fill_value=(
-            vs[0], vs[-1]), bounds_error=False, axis=0)
-    
-    def get_section_by_l(self, lstart, lend, seg_size=None):
-        """
-        returns an array of equally spaced l values from lstart to lend with approx segment size of seg_size
-        """
-        if seg_size is None:
-            seg_size = self.length/100
-        return np.linspace(lstart, lend, 1+int(np.round((lend-lstart)/seg_size)))
-    
-    def get_section_by_t(self, tstart, tend, seg_size=None):
-        """
-        returns an array of equally spaced l values corresponding to values from tstart to tend with approx segment size of seg_size
-        """
-        return self.get_section_by_l(self.l_of_t(tstart), self.l_of_t(tend), seg_size=seg_size)
-    
 
 class CircularCamRotater:
     def __init__(self, frame, omega, rv0 = np.array([1.0,-1.0,1.1]), rotvec = np.array([1.0,-1.0,0.7]), upVec = np.array([0,0,1])):

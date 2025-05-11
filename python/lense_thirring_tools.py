@@ -1,7 +1,9 @@
 import numpy as np
+import time
 from scipy.integrate import quad
 from scipy.optimize import brentq
 import scipy.integrate as spint
+import scipy.interpolate as spinter
 
 def set_params_lense_thirring(mass, omega, radius=1):
     global S, M, R
@@ -92,6 +94,84 @@ def bfield(rv):
         return 0*rv
     Sv = np.array([0,0,S])
     return (Sv-3*np.dot(Sv,rv)/r**2 * rv)/r**3
+
+class ParametricCurve:
+    """
+    Class to handle operations on a parametrized curve
+    """
+
+    def __init__(self, ts, xs=None, xf=None, init_nat_param=True):
+        self.ts = np.array(ts)
+        self.tmax = np.max(self.ts)
+        self.tmin = np.min(self.ts)
+        if xf is not None:
+            self.xs = xf(self.ts)
+        elif xs is not None:
+            self.xs = np.array(xs)
+        else:
+            raise Exception("either xs or xf has to be given")
+        if init_nat_param:
+            self.init_natural_parametrization()
+    
+    def init_natural_parametrization(self):
+        l = np.append([0], np.sqrt(np.sum((self.xs[1:]-self.xs[:-1])**2,axis=1)),axis=0)
+        l = np.cumsum(l)
+        self.length = np.max(l)
+        self.l_of_t = spinter.interp1d(self.ts, l, fill_value=(
+            l[0], l[-1]), bounds_error=False, axis=0)
+        self.t_of_l = spinter.interp1d(l, self.ts, fill_value=(
+            self.ts[0], self.ts[-1]), bounds_error=False, axis=0)
+        self.x_of_l = spinter.interp1d(l, self.xs, fill_value=(
+            self.xs[0], self.xs[-1]), bounds_error=False, axis=0)
+        #self.x_of_t = spinter.interp1d(self.ts, self.xs, fill_value=(
+        #    self.xs[0], self.xs[-1]), bounds_error=False, axis=0)
+        vs = np.gradient(l, self.ts)
+        vs = np.where(np.isnan(vs), 0, vs)
+        self.vmax = np.max(vs)
+        self.vmin = np.min(vs)
+        self.v_of_l = spinter.interp1d(l, vs, fill_value=(
+            vs[0], vs[-1]), bounds_error=False, axis=0)
+    
+    def get_section_by_l(self, lstart, lend, seg_size=None):
+        """
+        returns an array of equally spaced l values from lstart to lend with approx segment size of seg_size
+        """
+        if seg_size is None:
+            seg_size = self.length/100
+        return np.linspace(lstart, lend, 1+int(np.round((lend-lstart)/seg_size)))
+    
+    def get_section_by_t(self, tstart, tend, seg_size=None):
+        """
+        returns an array of equally spaced l values corresponding to values from tstart to tend with approx segment size of seg_size
+        """
+        return self.get_section_by_l(self.l_of_t(tstart), self.l_of_t(tend), seg_size=seg_size)
+    
+
+def get_geodesic2(accF,z0,system_timescale,tmax=np.Inf,t_fw=True,tol=1e-7,cputmax=1.0,boundary=np.array([[-10,-10,-10],[10,10,10]]),recurring_tol=1e-1):
+    tm = tmax if t_fw else -tmax
+    rkdp = spint.RK45(accF, 0.0, z0, tm , first_step=system_timescale*tol*1e-2, max_step=system_timescale*1e2, rtol=tol, atol=tol*1e-2/system_timescale)
+    ts = [0.0]
+    rs = [rkdp.y]
+    check_recurring= False
+    trun0 = time.time()
+    while time.time()-trun0 < cputmax:
+        rkdp.step()
+        if rkdp.h_abs > system_timescale*1e2:
+            rkdp.status = f"h_abs too large: {rkdp.h_abs}"
+        if any(np.logical_or(rkdp.y < boundary[0], rkdp.y > boundary[1])):
+            rkdp.status = "out of bounds"
+        dis = np.sum((np.array(rs[0]) - rkdp.y)**2)
+        if check_recurring and dis < recurring_tol**2:
+            rkdp.status = "returned to start point"
+        if dis > recurring_tol**2:
+            check_recurring = True
+        ts.append(rkdp.t)
+        rs.append(rkdp.y)
+        if rkdp.status != "running":
+            break
+    ts,rs = np.array(ts), np.array(rs)
+    sorter = np.argsort(ts)
+    return ts[sorter], rs[sorter], rkdp.status
 
 def get_geodesic(tau_max, z0, tol=1e-6, accF=acc_lense_thirring, check_break=check_break):
     rkdp = spint.RK45(accF, 0.0, z0, tau_max,
