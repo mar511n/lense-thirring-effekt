@@ -128,8 +128,8 @@ class LenseThirringGL(Slide):
         #kwargs['leave_progress_bars'] = True
         kwargs['camera_config'] = {'background_color':BACKCOL}
         kwargs['camera_config']['light_source_position'] = np.array([10, -10, 10])
-        #kwargs['start_at_animation_number'] = 34
-        #kwargs['end_at_animation_number'] = 42
+        #kwargs['start_at_animation_number'] = 20
+        #kwargs['end_at_animation_number'] = 28
         print(kwargs)
         super().__init__(*args, **kwargs)
         if self.high_quality:
@@ -356,7 +356,7 @@ class LenseThirringGL(Slide):
         self.pause()
 
 
-        # EFGl mit Analogie 2D Fläche eingebettet in 3D Raum -> 4D Fläche (20-27)
+        # EFGl mit Analogie 2D Fläche eingebettet in 3D Raum -> 4D Fläche (20-26)
         self.setup_new_slide(title='Einsteinsche Feldgleichungen',cleanup=True)
         text1 = TexText(r'2D Fläche $\rightarrow$ 4D Mannigfaltigkeit')
         text2 = TexText(r'Koordinaten $(ct,x,y,z)$ $\Rightarrow$ $\bm{g}\in\mathbb{R}^{4\times 4}$',isolate=[r'\bm{g}']).set_color_by_tex_to_color_map(symCols,only_isolated=True)
@@ -422,7 +422,7 @@ class LenseThirringGL(Slide):
         self.pause()
 
 
-        # Rotierende Kugelmasse (34-)
+        # Rotierende Kugelmasse (34-38)
         self.setup_new_slide(title='Rotierende Kugelmasse', cleanup=True)
         rhoKug = TexText(r'$\rho(|\vec{ x }|) = \rho_0 \Theta(R-|\vec{ x }|)$',isolate=[r'\vec{ x }']).set_color_by_tex_to_color_map(symCols,only_isolated=True)
         jKug = TexText(r'$\vec{j} = \rho_0 \vec{\omega}\times\vec{ x }\Theta(R-|\vec{ x }|)$',isolate=[r'\vec{ x }']).set_color_by_tex_to_color_map(symCols,only_isolated=True)
@@ -467,8 +467,7 @@ class LenseThirringGL(Slide):
         self.pause(auto_next=True)
 
 
-        # EM-Felder (30-35)
-        #   Formeln (30-31)
+        # EM-Felder (39-44)
         self.setup_new_slide(title='EM-Felder')
         self.pause(loop=True)
 
@@ -478,25 +477,24 @@ class LenseThirringGL(Slide):
         
 
         formula_box = SurroundingRectangle(efield_formula, color=ORANGE)
-        #   3D Axen & CamRot & Kugel
         bfmax = np.linalg.norm(ltt.bfield(np.array([[0,0,ltt.R]])))
         efmax = np.linalg.norm(ltt.efield(np.array([[0,0,ltt.R]])))
         bounds = np.array([[-2.5,-2.5,-2.5],[2.5,2.5,2.5]])
 
-        #   E-Feld (32)
+        #   E-Feld
         sls_e = mt.StreamLines(fieldf=lambda t,x: ltt.efield(np.array([x])), boundary=bounds, system_timescale=1/efmax, vmax=efmax)
         self.play(Write(formula_box),Write(axes),Write(sls_e))
         self.pause(loop=True)
 
         
-        #   E-Feld Animation (33)
+        #   E-Feld Animation
         sls_e.startUpdating(timeScaleF=0.25)
         camRot.startUpdating()
         self.wait(4.0)
         self.pause(auto_next=True)
 
 
-        #   B-Feld (34)
+        #   B-Feld
         sls_e.stopUpdating()
         camRot.stopUpdating()
         rs = [1, 2, 1]
@@ -508,7 +506,7 @@ class LenseThirringGL(Slide):
         self.pause(loop=True)
 
 
-        #   B-Feld Animation (35)
+        #   B-Feld Animation
         sls_b.startUpdating(timeScaleF=0.25)
         camRot.startUpdating()
         self.wait(4.0)
