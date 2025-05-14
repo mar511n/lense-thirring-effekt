@@ -12,8 +12,7 @@ import re
 """
 Strukturierung:
  ✓  Titelfolie
- ?  Teaser folie
- ✓  Inhaltsverzeichnis
+(✓) Inhaltsverzeichnis (und nebenan Darstellung der Trajektorien als Gaswolken)
  ✓  Einleitende Dinge zu ART (Geodäten & Metrik, Einsteingl. -> Metrik) (sagen, dass Geodäten lokal den Weg minimieren & aus Funktional der Länge hergeleitet werden können)
  ✓      Animation von gekrümmter Fläche, Metrik an einem Punkt, Geodäte
  ✓      Wie bestimmt man die Metrik?? -> EFG (Problem: nichtlinear, ableitungen von g)
@@ -22,9 +21,9 @@ Strukturierung:
  ✓      Bewegungsgleichung aus Geodätengleichung (Kopplung Metrik -> Materie)
  ✓  Problem einer rotierenden Kugelmasse (dichte und stromdichte hinschreiben) (sagen, dass Lösung wie schon in E-dynamik is)
  ✓      Darstellung der E,B Felder (gilt auch für nicht homogene Objekte mit Drehimpuls)
-        Darstellung der Trajektorien als Gaswolken
-        Alternative Darstellung über die Raumzeit (-> xy-Ebene -> Präzession)
+        Einzelne ausgewählte Trajektorien zeigen
         Herleitung & Darstellung Präzession
+        Alternative Darstellung über die Raumzeit (-> xy-Ebene -> Präzession)
     Gravity Probe B
     Akkretionsscheibe
     Pulsar
@@ -46,7 +45,7 @@ PresentationContents = (
     (1, 'Rotierende Kugelmasse'),
     (1, 'EM-Felder'),
     (0, 'Trajektorien'),
-    (0, 'Raumzeitdarstellung'))
+    (0, 'Präzession'))
 
 DARK_MODE: bool = True
 LIGHT_MODE: bool = False # highly experimental
@@ -128,7 +127,7 @@ class LenseThirringGL(Slide):
         #kwargs['leave_progress_bars'] = True
         kwargs['camera_config'] = {'background_color':BACKCOL}
         kwargs['camera_config']['light_source_position'] = np.array([10, -10, 10])
-        #kwargs['start_at_animation_number'] = 20
+        #kwargs['start_at_animation_number'] = 45
         #kwargs['end_at_animation_number'] = 28
         print(kwargs)
         super().__init__(*args, **kwargs)
@@ -145,12 +144,18 @@ class LenseThirringGL(Slide):
         self.slide_number_val = 0
         #   lense-thirring parameters (earth mass, maximal possible rotation speed of the earth)
         ltt.set_params_lense_thirring(mass=6.96e-10,omega=2.64e-5,radius=1)
+        #ltt.set_params_lense_thirring(mass=1.0,omega=1.0,radius=1.0)
         sphere_omega = 2*np.pi/2
         #   fix_in_frame objs z_index
         self.z_idx_fix = default_kwargs_text['z_index']
         #   set 2d screen space offset of 3d objects
-        self.offset_3d = np.array([2.2,0.0])
-        self.camera.uniforms['shift_screen_space'] = self.offset_3d
+        self.camera.uniforms['shift_screen_space'] = np.array([2.2,0.0])
+        self.offset_3d = ComplexValueTracker(self.camera.uniforms['shift_screen_space'][0]+1j*self.camera.uniforms['shift_screen_space'][1])
+        def screen_space_shift(obj,dt):
+            nonlocal self
+            val = self.offset_3d.get_value()
+            self.camera.uniforms['shift_screen_space'] = np.array([val.real,val.imag],dtype=float)
+        self.offset_3d.add_updater(screen_space_shift)
         #   predefined colors for certain tex parts
         symCols = {
             r'\vec{ x }':BLUE_D,
@@ -165,6 +170,8 @@ class LenseThirringGL(Slide):
             r'{R}':LIGHT_BROWN,
             r'{T}':RED,
             r'\vec{ F }':GOLD_C,
+            r'\vec{ F }_E':GOLD_C,
+            r'\vec{ F }_B':GOLD_C,
             r'\vec{ E }':YELLOW_B,
             r'\vec{ B }':YELLOW_B,
             r'{B}':YELLOW_B,
@@ -259,7 +266,7 @@ class LenseThirringGL(Slide):
 
 
         minkmetric = TexText(r'$\bm{\eta}=\begin{bmatrix}1 & 0 & 0 & 0 \\0 & -1 & 0 & 0 \\0 & 0 & -1 & 0 \\0 & 0 & 0 & -1\end{bmatrix}$')
-        minkmetric_conv = TexText(r'$(+---)$')
+        minkmetric_conv = TexText(r'$(+,-,-,-)$')
         natEinh = TexText(r'$c=G=1$')
         minkmetric.move_to((FRAME_WIDTH/4,0,0))
         self.play(Write(minkmetric))
@@ -382,11 +389,11 @@ class LenseThirringGL(Slide):
         fields = TexText(r'Substitutionen: ',r'$\vec{ E }=\frac{1}{2}\vec{\nabla} {h}_{00}$, ${B}_j=-\varepsilon_{jlm}\frac{\partial {h}_{0m}}{\partial {x}^l}$',isolate=[r'\vec{ E }',r'{h}',r'{x}',r'{B}']).set_color_by_tex_to_color_map(symCols,only_isolated=True).fix_in_frame()
         geod_gl_l1 = TexText(r'$\frac{d^2 {x}^{i}}{{dt}^2} = -\frac{1}{2}\frac{\partial {h}_{00}}{\partial {x}^i} + \varepsilon_{ijk}\varepsilon_{jlm}\frac{\partial {h}_{0m}}{\partial {x}^l}\frac{d {x}^k}{dt}$',isolate=[r'{x}',r'\bm{g}', r'{h}']).set_color_by_tex_to_color_map(symCols,only_isolated=True).fix_in_frame()
         geod_gl_l2 = TexText(r'$\vec{ F } = {m} \left( \vec{ E } + \vec{ v }\times\vec{ B } \right)$',isolate=[r'\vec{ F }', r'{m}',r'\vec{ E }', r'\vec{ v }', r'\vec{ B }']).set_color_by_tex_to_color_map(symCols,only_isolated=True).fix_in_frame()
-        efe_l1 = TexText(r'$-\Delta {h}_{00} = 8\pi\rho$, $-\Delta {h}_{0i} = 8\pi j_i$',isolate=[r'{h}']).set_color_by_tex_to_color_map(symCols,only_isolated=True).fix_in_frame()
+        efe_l1 = TexText(r'$-\Delta {h}_{00} = 8\pi\rho$, $-\Delta {h}_{0i} = 16\pi j_i$',isolate=[r'{h}']).set_color_by_tex_to_color_map(symCols,only_isolated=True).fix_in_frame()
         efe_l2 = TexText(r'$\vec{\nabla}\cdot\vec{ E } = - 4 \pi \rho$',isolate=[r'\vec{ E }', r'\vec{ B }']).set_color_by_tex_to_color_map(symCols,only_isolated=True).fix_in_frame()
         efe_l3 = TexText(r'$\vec{\nabla}\cdot\vec{ B } = 0$',isolate=[r'\vec{ E }', r'\vec{ B }']).set_color_by_tex_to_color_map(symCols,only_isolated=True).fix_in_frame()
         efe_l4 = TexText(r'$\vec{\nabla}\times\vec{ E } = 0$',isolate=[r'\vec{ E }', r'\vec{ B }']).set_color_by_tex_to_color_map(symCols,only_isolated=True).fix_in_frame()
-        efe_l5 = TexText(r'$\vec{\nabla}\times\vec{ B } = -8 \pi \vec{j}$',isolate=[r'\vec{ E }', r'\vec{ B }']).set_color_by_tex_to_color_map(symCols,only_isolated=True).fix_in_frame()
+        efe_l5 = TexText(r'$\vec{\nabla}\times\vec{ B } = -16 \pi \vec{j}$',isolate=[r'\vec{ E }', r'\vec{ B }']).set_color_by_tex_to_color_map(symCols,only_isolated=True).fix_in_frame()
         align_mobjs([(approxs,),(fields,),(efe,)],self.slide_title)
         efe.shift(DOWN*MED_SMALL_BUFF)
         align_mobjs([(efe_l1,),(efe_l2,)],efe)
@@ -426,7 +433,7 @@ class LenseThirringGL(Slide):
         self.setup_new_slide(title='Rotierende Kugelmasse', cleanup=True)
         rhoKug = TexText(r'$\rho(|\vec{ x }|) = \rho_0 \Theta(R-|\vec{ x }|)$',isolate=[r'\vec{ x }']).set_color_by_tex_to_color_map(symCols,only_isolated=True)
         jKug = TexText(r'$\vec{j} = \rho_0 \vec{\omega}\times\vec{ x }\Theta(R-|\vec{ x }|)$',isolate=[r'\vec{ x }']).set_color_by_tex_to_color_map(symCols,only_isolated=True)
-        bfield_formula = TexText(r'$\vec{ B } = \frac{1}{|\vec{ x }|^3} \left[\vec{S} - \frac{3 (\vec{S}\cdot\vec{ x }) \vec{ x }}{|\vec{ x }|^2}\right]$',isolate=[r'\vec{ B }',r'\vec{ x }']).set_color_by_tex_to_color_map(symCols,only_isolated=True)
+        bfield_formula = TexText(r'$\vec{ B } = \frac{2}{|\vec{ x }|^3} \left[\vec{S} - \frac{3 (\vec{S}\cdot\vec{ x }) \vec{ x }}{|\vec{ x }|^2}\right]$',isolate=[r'\vec{ B }',r'\vec{ x }']).set_color_by_tex_to_color_map(symCols,only_isolated=True)
         efield_formula = TexText(r'$\vec{ E } = -\frac{M \vec{ x }}{|\vec{ x }|^3}$',isolate=[r'\vec{ E }',r'\vec{ x }']).set_color_by_tex_to_color_map(symCols,only_isolated=True)
         inertia = TexText(r'$I = \frac{2}{5} M R^2$')
         angularM = TexText(r'$\vec{S} = I \vec{\omega}$')
@@ -510,6 +517,20 @@ class LenseThirringGL(Slide):
         sls_b.startUpdating(timeScaleF=0.25)
         camRot.startUpdating()
         self.wait(4.0)
+        self.pause()
+
+
+        # Trajektorien (45-47)
+        self.remove(sls_e)
+        self.remove(sls_b)
+        camRot.stopUpdating()
+        camRot.update(camRot.frame, 0)
+        self.setup_new_slide(title=r'Trajektorien',cleanup=True)
+        
+        force = TexText(r'$\vec{ F } = {m} \left( \vec{ E } + \vec{ v }\times\vec{ B } \right)$',isolate=[r'\vec{ F }',r'\vec{ v }',r'\vec{ E }',r'\vec{ B }']).set_color_by_tex_to_color_map(symCols,only_isolated=True)
+        align_mobjs([(force,)],self.slide_title)
+
+        self.play(Write(force), self.offset_3d.animate.set_value(0+0j))
         self.pause()
 
 

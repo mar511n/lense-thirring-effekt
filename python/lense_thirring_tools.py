@@ -49,8 +49,8 @@ def acc_lense_thirring(tau, zs):
     r = np.sqrt(np.sum(rs*rs))
     a[:4] = zs[4:]
     a[5:] -= M*rs
-    a[5:] += np.cross(vs, [0, 0, S])
-    a[5:] -= 3*S*rs[2]/(r*r) * np.cross(vs, rs)
+    a[5:] += 2*np.cross(vs, [0, 0, S])
+    a[5:] -= 6*S*rs[2]/(r*r) * np.cross(vs, rs)
     a[5:] /= r*r*r
     return a
 
@@ -86,7 +86,7 @@ def bfield(rv):
     idxs0 = np.argwhere(r==0)
     r[idxs0] = 1
     dot = np.sum(rv*Sv, axis=1)[:,np.newaxis]
-    res = (Sv-3*dot/r**2 * rv)/r**3
+    res = 2*(Sv-3*dot/r**2 * rv)/r**3
     res[idxs0] = rv*0
     return res
     r = np.linalg.norm(rv)
