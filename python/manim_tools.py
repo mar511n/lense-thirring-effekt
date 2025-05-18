@@ -9,20 +9,32 @@ class CurveDrawer(VMobject):
     """
     Draws multiple ParametricCurve objects and arrows
     """
-    def __init__(self, pcs, tip_width_ratio=4, arrow_base_length_factor=1/20, seg_base_size_factor=1/100, col_func=lambda x: x, cmap="viridis", arrow_res = 4, vmin=None, vmax=None, fixed_color=None, randomize_t0s=True, **kwargs):
+    def __init__(self, pcs, tip_width_ratio=4, arrow_base_length=0.4, seg_base_size=0.1, col_func=lambda x: x, cmap="viridis", arrow_res = 4, vmin=None, vmax=None, fixed_color=None, randomize_t0s=True, **kwargs):
         super().__init__(**kwargs)
         self.apply_depth_test()
         self.stroke_base_width = self.stroke_width
         self.tip_width_ratio = tip_width_ratio
-        self.pcs = pcs
         self.arrow_res = arrow_res
+        self.fixed_color = fixed_color
+        self.col_func = col_func
+        self.col_map = get_color_map(cmap)
+        self.randomize_t0s = randomize_t0s
+        #self.arrow_base_length_factor = arrow_base_length_factor
+        #self.seg_base_size_factor = seg_base_size_factor
+        self.arrow_base_length = arrow_base_length
+        self.seg_base_size = seg_base_size
+        self.set_pcs(pcs,vmin=vmin, vmax=vmax)
+        
+    
+    def set_pcs(self,pcs,vmin=None, vmax=None):
+        self.pcs = pcs
         self.dt0s = np.zeros(len(self.pcs))
-        if randomize_t0s:
+        if self.randomize_t0s:
             self.dt0s = np.random.random(len(self.pcs))
         self.lengths = np.array([pc.length for pc in pcs])
         mL = np.mean(self.lengths)
-        self.arrow_base_length = mL*arrow_base_length_factor
-        self.seg_base_size = mL*seg_base_size_factor
+        #self.arrow_base_length = mL*self.arrow_base_length_factor
+        #self.seg_base_size = mL*self.seg_base_size_factor
         if vmin is None:
             self.vmin = np.min([pc.vmin for pc in pcs])
         else:
@@ -31,11 +43,9 @@ class CurveDrawer(VMobject):
             self.vmax = np.max([pc.vmax for pc in pcs])
         else:
             self.vmax = vmax
-        self.fixed_color = fixed_color
-        self.col_func = col_func
-        self.col_map = get_color_map(cmap)
+
     
-    def update_graphics(self, arrow_tss=None, arrow_length=None, seg_size=None, randomize_t0s=True):
+    def update_graphics(self, arrow_tss=None, arrow_length=None, seg_size=None):
         if arrow_length is None:
             arrow_length = self.arrow_base_length
         if seg_size is None:
@@ -98,7 +108,7 @@ class StreamLines(CurveDrawer):
     """
     Generates the ParametricCurves to draw and animates the Arrows
     """
-    def __init__(self, fieldf=lambda t, x: np.array([x[1]**2,1,x[0]]), arrow_num=2, startPoints=None, startBox=[np.linspace(-1.5,1.5,3) for i in range(3)], boundary=None, system_timescale=1, tol=1e-7, recurring_tol=1e-1, trunmax=0.5, tip_width_ratio=4, arrow_base_length_factor=1 / 20, seg_base_size_factor=1 / 100, col_func=lambda x: x, cmap="viridis", arrow_res=4, **kwargs):
+    def __init__(self, fieldf=lambda t, x: np.array([x[1]**2,1,x[0]]), arrow_num=2, startPoints=None, startBox=[np.linspace(-1.5,1.5,3) for i in range(3)], boundary=None, system_timescale=1, tol=1e-7, recurring_tol=1e-1, trunmax=0.5, tip_width_ratio=4, arrow_base_length=0.4, seg_base_size=0.1, col_func=lambda x: x, cmap="viridis", arrow_res=4, **kwargs):
         if startPoints is None:
             startPoints = np.array([[x,y,z] for x in startBox[0] for y in startBox[1] for z in startBox[2]])
         if boundary is None:
@@ -129,7 +139,7 @@ class StreamLines(CurveDrawer):
             pcs.append(ltt.ParametricCurve(ts+np.min(ts), rs))
             print(">",end="")
         print("\nparametric curves initialized")
-        super().__init__(pcs, tip_width_ratio, arrow_base_length_factor, seg_base_size_factor, col_func, cmap, arrow_res, **kwargs)
+        super().__init__(pcs, tip_width_ratio, arrow_base_length, seg_base_size, col_func, cmap, arrow_res, **kwargs)
         self.update_graphics()
 
     def startUpdating(self, timeScaleF=1.0):

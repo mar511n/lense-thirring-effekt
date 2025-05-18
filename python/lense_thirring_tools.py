@@ -11,6 +11,16 @@ def set_params_lense_thirring(mass, omega, radius=1):
     R = radius
     S = 2/5 * M * R**2 * omega
 
+def set_m_r_s(mass, radius, spin):
+    global S, M, R
+    M = mass
+    R = radius
+    S = spin
+
+def get_m_r_s():
+    global S, M, R
+    return (M, R, S)
+
 def check_break(ts,ys):
     global R
     r2 = np.sum(ys[1:4]**2)
@@ -188,6 +198,17 @@ def get_geodesic(tau_max, z0, tol=1e-6, accF=acc_lense_thirring, check_break=che
         if rkdp.status != "running":
             break
     return np.array(taus),np.array(zs)
+
+def get_trajectory(R=1,M=1,omega=1.0,cputmax=0.1,tmax=np.Inf,x0=[3,0,0],v0=[0,0,0],xmin=[-3,-3,-3],xmax=[3,3,3],recurring_tol=1e-14,tol=1e-5):
+    boundary = np.array([[-0.1,xmin[0],xmin[1],xmin[2],-np.Inf,-np.Inf,-np.Inf,-np.Inf],[np.Inf,xmax[0],xmax[1],xmax[2],np.Inf,np.Inf,np.Inf,np.Inf]])
+    old_params = get_m_r_s()
+    set_params_lense_thirring(mass=M, omega=omega, radius=R)
+    z0 = np.array([0.0,x0[0],x0[1],x0[2],1.0,v0[0],v0[1],v0[2]])
+    ts, ps, status = get_geodesic2(acc_lense_thirring,z0,R,cputmax=cputmax,boundary=boundary,recurring_tol=recurring_tol,tmax=tmax,tol=tol)
+    set_m_r_s(*old_params)
+    if status != 'finished' and status != 'running' and status != 'out of bounds':
+        print(status)
+    return ParametricCurve(ts,ps[:,1:4])
 
 def generate_samples_scaled(g, a, b, N, rand=True):
     # Compute the normalizing constant

@@ -116,6 +116,11 @@ class Integer(Integer):
         kwargs = default_kwargs_vmobj | kwargs
         super().__init__(number, num_decimal_places, **kwargs)
 
+class DecimalNumber(DecimalNumber):
+    def __init__(self, number = 0, color = FRONTCOL, stroke_width = 0, fill_opacity = 1, fill_border_width = 0.5, num_decimal_places = 2, include_sign = False, group_with_commas = True, digit_buff_per_font_unit = 0.001, show_ellipsis = False, unit = None, include_background_rectangle = False, edge_to_fix = LEFT, font_size = CONTENT_FONT_SIZE, text_config = dict(), **kwargs):
+        kwargs = default_kwargs_vmobj | kwargs
+        super().__init__(number, color, stroke_width, fill_opacity, fill_border_width, num_decimal_places, include_sign, group_with_commas, digit_buff_per_font_unit, show_ellipsis, unit, include_background_rectangle, edge_to_fix, font_size, text_config, **kwargs)
+
 class Write(Write):
     def __init__(self, vmobject, run_time = 0.5, lag_ratio = -1, rate_func = linear, stroke_color = None, **kwargs):
         super().__init__(vmobject, run_time, lag_ratio, rate_func, stroke_color, **kwargs)
@@ -127,8 +132,8 @@ class LenseThirringGL(Slide):
         #kwargs['leave_progress_bars'] = True
         kwargs['camera_config'] = {'background_color':BACKCOL}
         kwargs['camera_config']['light_source_position'] = np.array([10, -10, 10])
-        #kwargs['start_at_animation_number'] = 45
-        #kwargs['end_at_animation_number'] = 28
+        #kwargs['start_at_animation_number'] = 40
+        #kwargs['end_at_animation_number'] = 46
         print(kwargs)
         super().__init__(*args, **kwargs)
         if self.high_quality:
@@ -143,8 +148,9 @@ class LenseThirringGL(Slide):
         #   manual reference of slide number
         self.slide_number_val = 0
         #   lense-thirring parameters (earth mass, maximal possible rotation speed of the earth)
-        ltt.set_params_lense_thirring(mass=6.96e-10,omega=2.64e-5,radius=1)
-        #ltt.set_params_lense_thirring(mass=1.0,omega=1.0,radius=1.0)
+        #ltt.set_params_lense_thirring(mass=6.96e-10,omega=2.64e-5,radius=1)
+        #   somewhat unrealistic parameters
+        ltt.set_params_lense_thirring(mass=1.0,omega=1.0,radius=1.0)
         sphere_omega = 2*np.pi/2
         #   fix_in_frame objs z_index
         self.z_idx_fix = default_kwargs_text['z_index']
@@ -429,7 +435,7 @@ class LenseThirringGL(Slide):
         self.pause()
 
 
-        # Rotierende Kugelmasse (34-38)
+        # Rotierende Kugelmasse (34-39)
         self.setup_new_slide(title='Rotierende Kugelmasse', cleanup=True)
         rhoKug = TexText(r'$\rho(|\vec{ x }|) = \rho_0 \Theta(R-|\vec{ x }|)$',isolate=[r'\vec{ x }']).set_color_by_tex_to_color_map(symCols,only_isolated=True)
         jKug = TexText(r'$\vec{j} = \rho_0 \vec{\omega}\times\vec{ x }\Theta(R-|\vec{ x }|)$',isolate=[r'\vec{ x }']).set_color_by_tex_to_color_map(symCols,only_isolated=True)
@@ -458,6 +464,14 @@ class LenseThirringGL(Slide):
             obj.rotate(dt*sphere_omega)
         self.canvas_objs.append(sphere)
         self.play(Write(axes),ShowCreation(sphere),Write(rhoKug))
+        self.pause()
+
+
+        newnatEinh = TexText(r'$c=G=R=1$').next_to(ude_logo.get_corner(UL),LEFT,aligned_edge=TOP)
+        self.play(ReplacementTransform(natEinh,newnatEinh))
+        self.canvas_objs.append(newnatEinh)
+        self.canvas_objs.remove(natEinh)
+        natEinh = newnatEinh
         self.pause(auto_next=True)
 
 
@@ -474,7 +488,7 @@ class LenseThirringGL(Slide):
         self.pause(auto_next=True)
 
 
-        # EM-Felder (39-44)
+        # EM-Felder (40-45)
         self.setup_new_slide(title='EM-Felder')
         self.pause(loop=True)
 
@@ -520,19 +534,86 @@ class LenseThirringGL(Slide):
         self.pause()
 
 
-        # Trajektorien (45-47)
+        # Trajektorien (46-58)
         self.remove(sls_e)
         self.remove(sls_b)
         camRot.stopUpdating()
+        sphere_omega = 0.0
         camRot.update(camRot.frame, 0)
         self.setup_new_slide(title=r'Trajektorien',cleanup=True)
-        
-        force = TexText(r'$\vec{ F } = {m} \left( \vec{ E } + \vec{ v }\times\vec{ B } \right)$',isolate=[r'\vec{ F }',r'\vec{ v }',r'\vec{ E }',r'\vec{ B }']).set_color_by_tex_to_color_map(symCols,only_isolated=True)
-        align_mobjs([(force,)],self.slide_title)
-
-        self.play(Write(force), self.offset_3d.animate.set_value(0+0j))
         self.pause()
 
+
+        force = TexText(r'$\vec{ F } = {m} \left( \vec{ E } + \vec{ v }\times\vec{ B } \right)$',isolate=[r'\vec{ F }',r'\vec{ v }',r'\vec{ E }',r'\vec{ B }']).set_color_by_tex_to_color_map(symCols,only_isolated=True)
+        omega_text = TexText(r'$\omega = $')
+        omega_val = DecimalNumber(0.0, num_decimal_places=2).fix_in_frame()
+        align_mobjs([(force,),(omega_text,)],self.slide_title)
+        omega_val.next_to(omega_text,RIGHT)
+        self.play(Write(force),Write(omega_text), Write(omega_val), self.offset_3d.animate.set_value(0+0j), sphere.animate.set_opacity(0.2))
+        sphere.deactivate_depth_test()
+        sphere.set_z_index(-10)
+        self.pause()
+
+        traj_tol = 1e-8
+        x0_v0_omega = [
+            ([3,0.5,0],[-0.6,0,0],[0.0,1.0],[10,10]),
+            ([0,0,2],[-np.sqrt(0.5),0,0],[0.0,0.712],[18,93.5]),
+        ]
+        trajs = [
+            mt.CurveDrawer([ltt.get_trajectory(M=ltt.M,R=ltt.R,omega=x0_v0_omega[0][2][0],x0=x0_v0_omega[0][0],v0=x0_v0_omega[0][1],tmax=x0_v0_omega[0][3][0],cputmax=0.4,tol=traj_tol)],randomize_t0s=False),
+            mt.CurveDrawer([ltt.get_trajectory(M=ltt.M,R=ltt.R,omega=x0_v0_omega[1][2][0],x0=x0_v0_omega[1][0],v0=x0_v0_omega[1][1],tmax=x0_v0_omega[1][3][0],cputmax=0.4,tol=traj_tol)],randomize_t0s=False),
+        ]
+        current_traj = 0
+        omega_tracker = ValueTracker(0.0)
+        tmax_tracker = ValueTracker(0.0)
+        def traj_updater(obj,dt):
+            nonlocal trajs, current_traj, x0_v0_omega, omega_tracker, tmax_tracker, sphere_omega
+            omega = omega_tracker.get_value()
+            omega_val.set_value(omega)
+            traj = trajs[current_traj]
+            traj.set_pcs([ltt.get_trajectory(M=ltt.M,R=ltt.R,omega=omega,x0=x0_v0_omega[current_traj][0],v0=x0_v0_omega[current_traj][1],tmax=tmax_tracker.get_value(),cputmax=0.4,tol=traj_tol)])
+            traj.update_graphics()
+            sphere_omega = omega*np.pi*4
+        omega_tracker.add_updater(traj_updater)
+
+        tmax_tracker.set_value(x0_v0_omega[0][3][0])
+        traj_updater(omega_tracker,0)
+        self.play(Write(trajs[0]),run_time=2.0,rate_func=linear)
+        self.pause(auto_next=True)
+
+
+        self.play(omega_tracker.animate.set_value(x0_v0_omega[0][2][1]),run_time=4.0,rate_func=linear)
+        self.pause(loop=True)
+
+
+        self.wait(2*np.pi/sphere_omega)
+        self.pause()
+
+
+        current_traj = 1
+        tmax_tracker.set_value(x0_v0_omega[1][3][0])
+        omega_tracker.set_value(x0_v0_omega[1][2][0])
+        traj_updater(omega_tracker,0)
+        self.play(FadeOut(trajs[0]))
+        self.play(Write(trajs[1]),run_time=2.0,rate_func=linear)
+        self.pause(auto_next=True)
+        
+
+        self.play(omega_tracker.animate.set_value(x0_v0_omega[1][2][1]),run_time=4.0,rate_func=linear)
+        self.pause(loop=True)
+
+
+        self.wait(2*np.pi/sphere_omega)
+        self.pause(auto_next=True)
+
+        
+        self.play(tmax_tracker.animate.set_value(x0_v0_omega[1][3][1]/2),self.frame.animate.reorient(0,58,0),run_time=2.0,rate_func=linear)
+        self.play(tmax_tracker.animate.set_value(x0_v0_omega[1][3][1]),self.frame.animate.reorient(0,0,0),run_time=2.0,rate_func=linear)
+        self.pause(loop=True)
+
+
+        self.wait(2*np.pi/sphere_omega)
+        self.pause()
 
     def get_non_canvas_mobjs(self):
         return [mobj for mobj in self.get_top_level_mobjects() if mobj not in self.canvas_objs]
