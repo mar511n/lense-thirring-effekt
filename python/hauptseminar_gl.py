@@ -21,8 +21,8 @@ Strukturierung:
  ✓      Bewegungsgleichung aus Geodätengleichung (Kopplung Metrik -> Materie)
  ✓  Problem einer rotierenden Kugelmasse (dichte und stromdichte hinschreiben) (sagen, dass Lösung wie schon in E-dynamik is)
  ✓      Darstellung der E,B Felder (gilt auch für nicht homogene Objekte mit Drehimpuls)
-        Einzelne ausgewählte Trajektorien zeigen
-        Herleitung & Darstellung Präzession
+ ✓      Einzelne ausgewählte Trajektorien zeigen
+        Darstellung & Herleitung Präzession
         Alternative Darstellung über die Raumzeit (-> xy-Ebene -> Präzession)
     Gravity Probe B
     Akkretionsscheibe
@@ -132,8 +132,8 @@ class LenseThirringGL(Slide):
         #kwargs['leave_progress_bars'] = True
         kwargs['camera_config'] = {'background_color':BACKCOL}
         kwargs['camera_config']['light_source_position'] = np.array([10, -10, 10])
-        #kwargs['start_at_animation_number'] = 40
-        #kwargs['end_at_animation_number'] = 46
+        #kwargs['start_at_animation_number'] = 58
+        #kwargs['end_at_animation_number'] = 61
         print(kwargs)
         super().__init__(*args, **kwargs)
         if self.high_quality:
@@ -534,7 +534,7 @@ class LenseThirringGL(Slide):
         self.pause()
 
 
-        # Trajektorien (46-58)
+        # Trajektorien (46-57)
         self.remove(sls_e)
         self.remove(sls_b)
         camRot.stopUpdating()
@@ -600,6 +600,7 @@ class LenseThirringGL(Slide):
         
 
         self.play(omega_tracker.animate.set_value(x0_v0_omega[1][2][1]),run_time=4.0,rate_func=linear)
+        omega_tracker.remove_updater(traj_updater)
         self.pause(loop=True)
 
 
@@ -607,12 +608,74 @@ class LenseThirringGL(Slide):
         self.pause(auto_next=True)
 
         
+        omega_tracker.add_updater(traj_updater)
         self.play(tmax_tracker.animate.set_value(x0_v0_omega[1][3][1]/2),self.frame.animate.reorient(0,58,0),run_time=2.0,rate_func=linear)
         self.play(tmax_tracker.animate.set_value(x0_v0_omega[1][3][1]),self.frame.animate.reorient(0,0,0),run_time=2.0,rate_func=linear)
         self.pause(loop=True)
 
 
         self.wait(2*np.pi/sphere_omega)
+        omega_tracker.remove_updater(traj_updater)
+        self.pause()
+
+
+        #   Raumzeitdarstellung (58-63)
+        sphere_omega = 0.0
+        self.setup_new_slide(title='Raumzeitdarstellung',cleanup=True)
+        text_erkl0 = TexText(r'Zeitentwicklung')
+        text_erkl1 = TexText(r'für jeden')
+        text_erkl2 = TexText(r'Gitterpunkt')
+        text_o0 = TexText('bei ', r'$\omega=0$')
+        text_o1 = TexText('bei ', r'$\omega=1$')
+        align_mobjs([(text_erkl0,),(text_erkl1,),(text_erkl2,),(text_o0,text_o1)],self.slide_title)
+        sphere.apply_depth_test()
+        self.play(sphere.animate.set_opacity(1.0), Write(text_erkl0), Write(text_erkl1), Write(text_erkl2))
+        self.pause()
+
+
+        lines_0 = np.load('./assets/spacetime_sims/lt2d_lines__line_nums=22__subdivisions=100__timesteps=180__tau_max=9.0__R=1.0__M=1.0__omega=0.0.npy')
+        print(f'loaded lines with shape {lines_0.shape}')
+        lines_1 = np.load('./assets/spacetime_sims/lt2d_lines__line_nums=22__subdivisions=100__timesteps=180__tau_max=9.0__R=1.0__M=1.0__omega=1.0.npy')
+        print(f'loaded lines with shape {lines_1.shape}')
+        lanim_0 = mt.LineAnim(np.linspace(0,9.0,lines_0.shape[1]),lines_0,z_index=-1)
+        lanim_1 = mt.LineAnim(np.linspace(0,9.0,lines_1.shape[1]),lines_1,z_index=-1)
+        lanim_0.updateVMobjs(0,force=True)
+        lanim_1.updateVMobjs(0,force=True)
+        # overlap square from (-20,-20,0.1) to (20,20,0.1) except for the region between (-3,-3,0.1) and (3,3,0.1)
+        olaps = 3
+        verts = (
+            (-20,-20,0.1),
+            (20,-20,0.1),
+            (20,20,0.1),
+            (-20,20,0.1),
+            (-20,-20,0.1),
+            (-olaps,-olaps,0.1),
+            (-olaps,olaps,0.1),
+            (olaps,olaps,0.1),
+            (olaps,-olaps,0.1),
+            (-olaps,-olaps,0.1),
+        )
+        overlap = Polygon(*verts, fill_color=BACKCOL, fill_opacity=1.0, stroke_width=0.0).apply_depth_test()
+        olapedge = Polygon(*verts[5:-1], fill_opacity=0.0, stroke_width=DEFAULT_STROKE_WIDTH, stroke_color=FRONTCOL)
+        self.add(overlap,olapedge)
+        self.play(Write(text_o0), Write(lanim_0))
+        self.pause()
+
+
+        lanim_0.startUpdating(timeScaleF=2.0)
+        self.wait(4.0)
+        lanim_0.stopUpdating()
+        self.pause()
+
+        
+        self.play(ReplacementTransform(text_o0,text_o1), ReplacementTransform(lanim_0, lanim_1))
+        sphere_omega = np.pi*4
+        self.pause()
+
+
+        lanim_1.startUpdating(timeScaleF=2.0)
+        self.wait(4.0)
+        lanim_1.stopUpdating()
         self.pause()
 
     def get_non_canvas_mobjs(self):

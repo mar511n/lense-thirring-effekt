@@ -24,7 +24,7 @@ def get_m_r_s():
 def check_break(ts,ys):
     global R
     r2 = np.sum(ys[1:4]**2)
-    return r2 < R**2
+    return r2 < (0.9*R)**2
 
 def set_params_gaußian_surface(variance, A=1.0):
     global sigma,amplitude
@@ -211,6 +211,8 @@ def get_trajectory(R=1,M=1,omega=1.0,cputmax=0.1,tmax=np.Inf,x0=[3,0,0],v0=[0,0,
     return ParametricCurve(ts,ps[:,1:4])
 
 def generate_samples_scaled(g, a, b, N, rand=True):
+    if a == b:
+        return np.full(N, a)
     # Compute the normalizing constant
     integral, _ = quad(g, a, b)
     g_normalized = lambda x: g(x) / integral
@@ -250,28 +252,28 @@ def generate_3d_grid_lines(start_point, end_point, num_lines, subdivisions, g):
     # Generate the points on each line with the specified number of subdivisions
     lines = []
 
-    # Lines parallel to the yz-plane
-    z_points = generate_samples_scaled(g, z0, z1, subdivisions, rand=False)
-    for x in x_lines:
+    if nz > 1:
+        z_points = generate_samples_scaled(g, z0, z1, subdivisions, rand=False)
+        for x in x_lines:
+            for y in y_lines:
+                line = np.column_stack(
+                    (np.full(subdivisions, x), np.full(subdivisions, y), z_points))
+                lines.append(line.tolist())
+
+    if ny > 1:
+        y_points = generate_samples_scaled(g, y0, y1, subdivisions, rand=False)
+        for x in x_lines:
+            for z in z_lines:
+                line = np.column_stack(
+                    (np.full(subdivisions, x), y_points, np.full(subdivisions, z)))
+                lines.append(line.tolist())
+
+    if nx > 1:
+        x_points = generate_samples_scaled(g, x0, x1, subdivisions, rand=False)
         for y in y_lines:
-            line = np.column_stack(
-                (np.full(subdivisions, x), np.full(subdivisions, y), z_points))
-            lines.append(line.tolist())
-
-    # Lines parallel to the xz-plane
-    y_points = generate_samples_scaled(g, y0, y1, subdivisions, rand=False)
-    for x in x_lines:
-        for z in z_lines:
-            line = np.column_stack(
-                (np.full(subdivisions, x), y_points, np.full(subdivisions, z)))
-            lines.append(line.tolist())
-
-    # Lines parallel to the xy-plane
-    x_points = generate_samples_scaled(g, x0, x1, subdivisions, rand=False)
-    for y in y_lines:
-        for z in z_lines:
-            line = np.column_stack(
-                (x_points, np.full(subdivisions, y), np.full(subdivisions, z)))
-            lines.append(line.tolist())
+            for z in z_lines:
+                line = np.column_stack(
+                    (x_points, np.full(subdivisions, y), np.full(subdivisions, z)))
+                lines.append(line.tolist())
 
     return np.array(lines)

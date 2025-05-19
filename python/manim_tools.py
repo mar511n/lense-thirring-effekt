@@ -5,6 +5,69 @@ from scipy.spatial.transform import Rotation
 import time
 import lense_thirring_tools as ltt
 
+class LineAnim(VGroup):
+    """
+    display and animate multiple lines based on a set of lines and timestamps
+    ts.shape = (timesteps, )
+    lines.shape = (line_nums, timesteps, subdivisions, 3)
+    color_values.shape = lines.shape
+    """
+    def __init__(self, ts, lines, color_values=None, cmap="viridis", repeat=True, depth_test=True, **kwargs):
+        """
+        TODO: color_values has not been tested yet...
+        """
+        self.line_nums = lines.shape[0]
+        self.timesteps = len(ts)
+        self.subdivisions = lines.shape[2]
+        self.ts = ts
+        self.lines = lines
+        self.currentT = 0.0
+        self.currentI = 0
+        self.t_max = np.max(ts)
+        self.repeat = repeat
+        vmobjs = [VMobject() for li in range(self.line_nums)]
+        super().__init__(vmobjs, **kwargs)
+        self.cmap = get_color_map(cmap)
+        if color_values is not None:
+            color_values -= np.min(color_values)
+            color_values /= np.max(color_values)
+            self.colors = self.cmap(color_values)
+        else:
+            self.colors = None
+
+        if depth_test:
+            self.apply_depth_test(recurse=True)
+    
+    def startUpdating(self, timeScaleF=1.0, call=True):
+        self.currentT = 0.0
+        self.currentI = 0
+        def updater(obj,dt):
+            nonlocal timeScaleF
+            obj.currentT += dt*timeScaleF
+            if obj.currentT > obj.t_max:
+                if obj.repeat:
+                    obj.currentT -= obj.t_max
+                    obj.currentI = 0
+                else:
+                    obj.currentT = obj.t_max
+            obj.updateVMobjs(obj.currentT)
+        self.add_updater(updater,call=call)
+    
+    def stopUpdating(self):
+        self.clear_updaters()
+        
+    def updateVMobjs(self, t, force=False):
+        changed = False
+        while self.currentI+1 < len(self.ts) and self.ts[self.currentI+1] < t:
+            self.currentI += 1
+            changed = True
+        
+        if changed or force:
+            for li in range(self.line_nums):
+                self[li].set_points_smoothly(self.lines[li,self.currentI,:,:])
+                if self.colors is not None:
+                    self[li].set_stroke(color=self.colors[li,self.currentI])
+
 class CurveDrawer(VMobject):
     """
     Draws multiple ParametricCurve objects and arrows
