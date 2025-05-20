@@ -30,9 +30,12 @@ Strukturierung:
 
     
 TODO:
-check slide numbers
-check pauses
-check rate functions (linear)
+mehr slide nummern
+self.pause überprüfen
+rate functions (linear) überprüfen
+
+Trajektorien: Erde kleiner machen (R->r), statt omega S benutzen; damit S gleich bleibt => (S_0 = 2/5*omega, S_1 = S_0 * (r/R)^2)
+    alternativ: Nikodem überzeugen, dass R=1 wichtig ist, da sonst omega>1 => v > c, was nicht geht
 """
 
 PresentationTitle = 'Lense-Thirring-Effekt'
@@ -138,7 +141,7 @@ class LenseThirringGL(Slide):
         #kwargs['leave_progress_bars'] = True
         kwargs['camera_config'] = {'background_color':BACKCOL}
         kwargs['camera_config']['light_source_position'] = np.array([10, -10, 10])
-        #kwargs['start_at_animation_number'] = 67
+        #kwargs['start_at_animation_number'] = 72
         #kwargs['end_at_animation_number'] = 61
         print(kwargs)
         super().__init__(*args, **kwargs)
@@ -189,7 +192,11 @@ class LenseThirringGL(Slide):
             r'\vec{ B }':YELLOW_B,
             r'{B}':YELLOW_B,
             r'\vec{ v }':BLUE_B,
-            r'{m}':WHITE
+            r'{m}':WHITE,
+            r'\vec{ L }':BLUE_D,
+            r'\vec{ r }':GREEN_C,
+            r'\vec{ \Omega }':ORANGE,
+            r'\vec{ M }': LIGHT_BROWN
         }
         #   function to align Mobjs on the left below the title
         def align_mobjs(mobjs,tomobj,center=False):
@@ -731,8 +738,7 @@ class LenseThirringGL(Slide):
             nonlocal spin_axis, spin
             obj.rotate(dt*spin,axis=spin_axis)
         probe.add_updater(rot_around_spin)
-        probe_arr = mt.Arrow3D(length=0.5,tip_width_ratio = 0.3,tip_length = 0.1,shaft_width = 0.015,color=BLUE_D,depth_test=True)
-        probe_arr.move_to((2.0,0,0.25))
+        probe_arr = mt.Arrow3D(start=(2,0,0),end=(2,0,0.5),tip_width_ratio = 0.3,tip_length = 0.1,shaft_width = 0.015,color=BLUE_D,depth_test=True)
         probe_arr.rotate(precession_angle,axis=UP,about_point=(2,0,0))
         def rot_spin(obj,dt):
             nonlocal spin_axis, probe, precession
@@ -741,8 +747,7 @@ class LenseThirringGL(Slide):
             spin_axis = rotate_vector(spin_axis, dt*precession, axis=(0,0,-1))
         probe_arr.add_updater(rot_spin)
 
-        precession_arrow = mt.Arrow3D(length=0.462,tip_width_ratio = 0.3,tip_length = 0.1,shaft_width = 0.015,color=ORANGE,depth_test=True)
-        precession_arrow.move_to((2.0,0,0.231))
+        precession_arrow = mt.Arrow3D(start=(2,0,0),end=(2,0,0.462),tip_width_ratio = 0.3,tip_length = 0.1,shaft_width = 0.015,color=ORANGE,depth_test=True)
         precession_circle = Circle(radius=0.191, color=YELLOW_E, fill_opacity=0.4, stroke_width=DEFAULT_STROKE_WIDTH).rotate(np.pi,axis=UP)
         precession_circle.move_to((2.0,0,0.462))
 
@@ -788,16 +793,82 @@ class LenseThirringGL(Slide):
 
 
         #   Präzession Rechnung (72-75)
-        # 3d view nach rechts, kreisel in (0,0,0), Erde & Linien & Kreis & pr_vec weg 
-        self.play(self.next_slide_number_animation(), self.wipe([],[],return_animation=True))
-
+        # slidenumber, 3d view nach rechts, kreisel in (0,0,0), Erde & Linien & Kreis & pr_vec weg 
+        # TODO: add formulas
+        probe_arr.remove_updater(rot_spin)
+        self.canvas_objs.remove(sphere)
+        new_axes = ThreeDAxes(x_range=(-0.5,0.5,0.5),y_range=(-0.5,0.5,0.5),z_range=(-0.5,0.5,0.5))
+        new_axes.apply_depth_test(recurse=True)
+        self.play(
+            self.next_slide_number_animation(),
+            self.offset_3d.animate.set_value(2.4+0j),
+            self.frame.animate.reorient(-20,58,0,(0,0,0),2),
+            probe.animate.shift((-2,0,0)),
+            probe_arr.animate.shift((-2,0,0)),
+            ReplacementTransform(axes,new_axes),
+            self.wipe([sphere, lanim_1, lanim_2, precession_circle, precession_arrow],[],return_animation=True))
+        self.pause(auto_next=True)
+        
+        
         # B-Vektoren einzeichnen
+        bvecs = Group(*[mt.Arrow3D(start=(x,y,-0.25),end=(x,y,0.25),color=symCols[r'\vec{ B }']) for x in np.linspace(-0.5,0.5,2) for y in np.linspace(-0.5,0.5,2)])
+        self.play(ShowCreation(bvecs))
+        self.pause(loop=True)
+
+
+        self.wait(np.pi/spin)
+        self.pause(auto_next=True)
+
 
         # Kreisel 2 geschw. vektoren einzeichnen
+        velvecposs = [np.array(rotate_vector((0,0,0.2),np.pi/2+precession_angle,axis=UP))]
+        velvecposs = [(velvecposs[0],velvecposs[0]+np.array([0,0.3,0])),(-velvecposs[0],-velvecposs[0]-np.array([0,0.3,0]))]
+        velvecs = Group(*[mt.Arrow3D(start=start,end=end,tip_length=0.06,color=symCols[r'\vec{ v }']) for start,end in velvecposs])
+        self.play(ShowCreation(velvecs))
+        self.pause(loop=True)
+
+
+        self.wait(np.pi/spin)
+        self.pause(auto_next=True)
+
 
         # resultierende Kraft einzeichnen
+        forcevecposs = [(velvecposs[0][0],velvecposs[0][0]+np.array([0.3,0,0])),(velvecposs[1][0],velvecposs[1][0]-np.array([0.3,0,0]))]
+        forcevecs = Group(*[mt.Arrow3D(start=start,end=end,tip_length=0.06,color=symCols[r'\vec{ F }']) for start,end in forcevecposs])
+        self.play(ShowCreation(forcevecs))
+        self.pause(loop=True)
+
+
+        self.wait(np.pi/spin)
+        self.pause(auto_next=True)
+
 
         # resultierendes Drehmoment einzeichnen
+        posposs = [(np.zeros(3),velvecposs[0][0]),(np.zeros(3),velvecposs[1][0])]
+        posvecs = Group(*[mt.Arrow3D(start=start,end=end,tip_length=0.06,color=symCols[r'\vec{ r }']) for start,end in posposs])
+        torquepos = np.array(rotate_vector((0,0,0.5),precession_angle,axis=UP))
+        torquevecposs = [(torquepos,torquepos+np.array([0,0.2,0])),(torquepos+np.array([0,0.2,0]),torquepos+np.array([0,0.4,0]))]
+        torquevecs = Group(*[mt.Arrow3D(start=start,end=end,tip_length=0.06,color=symCols[r'\vec{ M }']) for start,end in torquevecposs])
+        self.play(Uncreate(probe))
+        self.play(ShowCreation(posvecs),ShowCreation(torquevecs))
+        self.pause(loop=True)
+
+
+        self.wait(np.pi/spin)
+        self.pause(auto_next=True)
+
+
+        precession_arrow = mt.Arrow3D(start=(0,0,0),end=(0,0,0.462),tip_width_ratio = 0.3,tip_length = 0.1,shaft_width = 0.015,color=symCols[r'\vec{ \Omega }'],depth_test=True)
+        precession_circle = Circle(radius=0.191, color=symCols[r'\vec{ \Omega }'], fill_opacity=0.4, stroke_width=DEFAULT_STROKE_WIDTH).rotate(np.pi,axis=UP)
+        precession_circle.move_to((0,0,0.462))
+        self.play(ShowCreation(precession_arrow),ShowCreation(precession_circle))
+        self.pause(loop=True)
+
+
+        # TODO: rotate torquevecs,posvecs,velvecs,forcevecs around z-axis
+        self.wait(np.pi/spin)
+        self.pause()
+
 
     def get_non_canvas_mobjs(self):
         return [mobj for mobj in self.get_top_level_mobjects() if mobj not in self.canvas_objs]

@@ -10,22 +10,30 @@ class Arrow3D(Surface):
     A 3D arrow object
     """
     def __init__(self,
+                start = np.array([0,0,0]),
+                end = np.array([0,0,1]),
                 color = GREY,
                 shading = (0.3, 0.2, 0.4),
                 depth_test = True,
-                length = 1,
-                tip_width_ratio = 1,
-                tip_length = 0.2,
-                shaft_width = 0.1,
+                tip_width_ratio = 0.3,
+                tip_length = 0.1,
+                shaft_width = 0.015,
                 resolution = (41, 101),
                 prefered_creation_axis = 1,
                 epsilon = 1e-4,
                 **kwargs):
-        self.length = length
+        self.start = np.array(start)
+        self.end = np.array(end)
+        self.length = np.linalg.norm(self.end-self.start)
         self.tip_width_ratio = tip_width_ratio
         self.tip_length = tip_length
         self.shaft_width = shaft_width
         super().__init__(color, shading, depth_test, (0,TAU), (0,1.0), resolution, prefered_creation_axis, epsilon, **kwargs)
+        self.move_to((self.start+self.end)/2)
+        # rotate the arrow to point from start to end (currently it points along the z-axis)
+        target = self.end-self.start
+        self.rotate(np.arccos(target[2]/self.length), axis=(1,0,0))
+        self.rotate(np.arctan2(target[1], target[0])+np.pi/2, axis=(0,0,1))
 
     def uv_func(self, u: float, v: float) -> np.ndarray:
         if v < 0.25:
