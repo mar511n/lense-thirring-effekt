@@ -5,6 +5,42 @@ from scipy.spatial.transform import Rotation
 import time
 import lense_thirring_tools as ltt
 
+class Arrow3D(Surface):
+    """
+    A 3D arrow object
+    """
+    def __init__(self,
+                color = GREY,
+                shading = (0.3, 0.2, 0.4),
+                depth_test = True,
+                length = 1,
+                tip_width_ratio = 1,
+                tip_length = 0.2,
+                shaft_width = 0.1,
+                resolution = (41, 101),
+                prefered_creation_axis = 1,
+                epsilon = 1e-4,
+                **kwargs):
+        self.length = length
+        self.tip_width_ratio = tip_width_ratio
+        self.tip_length = tip_length
+        self.shaft_width = shaft_width
+        super().__init__(color, shading, depth_test, (0,TAU), (0,1.0), resolution, prefered_creation_axis, epsilon, **kwargs)
+
+    def uv_func(self, u: float, v: float) -> np.ndarray:
+        if v < 0.25:
+            r = v*4*self.shaft_width
+            return np.array([r*np.cos(u), r*np.sin(u), 0])
+        elif v < 0.5:
+            r = self.shaft_width
+            return np.array([r*np.cos(u), r*np.sin(u), (v-0.25)*4*(self.length-self.tip_length)])
+        elif v < 0.75:
+            r = self.shaft_width+(v-0.5)*4*self.tip_width_ratio*self.tip_length
+            return np.array([r*np.cos(u), r*np.sin(u), self.length-self.tip_length])
+        r = (self.shaft_width+self.tip_width_ratio*self.tip_length)*(1.0-v)*4
+        return np.array([r*np.cos(u), r*np.sin(u), self.length-self.tip_length*4*(1.0-v)])
+        
+
 class LineAnim(VGroup):
     """
     display and animate multiple lines based on a set of lines and timestamps
@@ -38,6 +74,12 @@ class LineAnim(VGroup):
         if depth_test:
             self.apply_depth_test(recurse=True)
     
+    def reset_state(self):
+        self.stopUpdating()
+        self.currentT = 0.0
+        self.currentI = 0
+        self.updateVMobjs(0,force=True)
+
     def startUpdating(self, timeScaleF=1.0, call=True):
         self.currentT = 0.0
         self.currentI = 0
