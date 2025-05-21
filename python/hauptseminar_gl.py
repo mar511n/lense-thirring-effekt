@@ -36,6 +36,9 @@ rate functions (linear) überprüfen
 
 Trajektorien: Erde kleiner machen (R->r), statt omega S benutzen; damit S gleich bleibt => (S_0 = 2/5*omega, S_1 = S_0 * (r/R)^2)
     alternativ: Nikodem überzeugen, dass R=1 wichtig ist, da sonst omega>1 => v > c, was nicht geht
+
+Wichtig zu erwähnen:
+    - EFE sind 16 nichtlineare, gekoppelte Differentialgleichungen
 """
 
 PresentationTitle = 'Lense-Thirring-Effekt'
@@ -141,7 +144,7 @@ class LenseThirringGL(Slide):
         #kwargs['leave_progress_bars'] = True
         kwargs['camera_config'] = {'background_color':BACKCOL}
         kwargs['camera_config']['light_source_position'] = np.array([10, -10, 10])
-        #kwargs['start_at_animation_number'] = 72
+        #kwargs['start_at_animation_number'] = 84
         #kwargs['end_at_animation_number'] = 61
         print(kwargs)
         super().__init__(*args, **kwargs)
@@ -387,7 +390,7 @@ class LenseThirringGL(Slide):
             g = ltt.metric_gaußian_surface(pos[0],pos[1]).flatten()
             for i in range(4):
                 mob.elements[i].set_value(g[i])
-        self.play(FadeIn(surface), grid_nc.animate.apply_function(lambda r: [r[0],r[1],ltt.z_gaußian_surface(r[0],r[1])+1e-2]), ReplacementTransform(pcd_nc, pcd), ReplacementTransform(rfunc_euclid,rfunc), ReplacementTransform(g_euclid[1],metric), ReplacementTransform(geod_gl_eucild[1],geod_gl[1]))
+        self.play(self.next_slide_number_animation(), FadeIn(surface), grid_nc.animate.apply_function(lambda r: [r[0],r[1],ltt.z_gaußian_surface(r[0],r[1])+1e-2]), ReplacementTransform(pcd_nc, pcd), ReplacementTransform(rfunc_euclid,rfunc), ReplacementTransform(g_euclid[1],metric), ReplacementTransform(geod_gl_eucild[1],geod_gl[1]))
         self.wait(0.04)
         self.pause(loop=True)
 
@@ -524,7 +527,7 @@ class LenseThirringGL(Slide):
 
 
         # EM-Felder (40-45)
-        self.setup_new_slide(title='EM-Felder')
+        self.play(self.next_slide_title_animation('EM-Felder'))
         update_back_rects()
         self.pause(loop=True)
 
@@ -540,7 +543,7 @@ class LenseThirringGL(Slide):
 
         #   E-Feld
         sls_e = mt.StreamLines(fieldf=lambda t,x: ltt.efield(np.array([x])), boundary=bounds, system_timescale=1/efmax, vmax=efmax)
-        self.play(Write(formula_box),Write(axes),Write(sls_e))
+        self.play(self.next_slide_number_animation(),Write(formula_box),Write(axes),Write(sls_e))
         self.pause(loop=True)
 
         
@@ -559,7 +562,7 @@ class LenseThirringGL(Slide):
         phis = np.arange(0,2*np.pi,np.pi/4)
         startPoints = np.array([[rs[zi]*np.cos(phi),rs[zi]*np.sin(phi),zs[zi]] for phi in phis for zi in range(len(zs))])
         sls_b = mt.StreamLines(fieldf=lambda t,x: ltt.bfield(np.array([x])), startPoints=startPoints, boundary=bounds, system_timescale=1/bfmax, vmax=bfmax)
-        self.play(formula_box.animate.surround(bfield_formula), FadeOut(sls_e), Write(sls_b))
+        self.play(self.next_slide_number_animation(),formula_box.animate.surround(bfield_formula), FadeOut(sls_e), Write(sls_b))
         self.pause(loop=True)
 
 
@@ -631,7 +634,7 @@ class LenseThirringGL(Slide):
         tmax_tracker.set_value(x0_v0_omega[1][3][0])
         omega_tracker.set_value(x0_v0_omega[1][2][0])
         traj_updater(omega_tracker,0)
-        self.play(FadeOut(trajs[0]))
+        self.play(self.next_slide_number_animation(),FadeOut(trajs[0]))
         self.play(Write(trajs[1]),run_time=2.0,rate_func=linear)
         self.pause(auto_next=True)
         
@@ -707,7 +710,7 @@ class LenseThirringGL(Slide):
         self.pause()
 
         
-        self.play(ReplacementTransform(text_o0,text_o1), ReplacementTransform(lanim_0, lanim_1))
+        self.play(self.next_slide_number_animation(),ReplacementTransform(text_o0,text_o1), ReplacementTransform(lanim_0, lanim_1))
         sphere_omega = sphere_omega0
         self.pause(loop=True)
 
@@ -792,9 +795,29 @@ class LenseThirringGL(Slide):
         self.pause()
 
 
-        #   Präzession Rechnung (72-75)
+        #   Präzession Rechnung (72-83)
         # slidenumber, 3d view nach rechts, kreisel in (0,0,0), Erde & Linien & Kreis & pr_vec weg 
-        # TODO: add formulas
+        drehimp = TexText('Drehimpuls:')
+        drehimp_tex = TexText(r'$\vec{ L }$',isolate=[r'\vec{ L }']).set_color_by_tex_to_color_map(symCols,only_isolated=True)
+        magn = TexText('Gravitomagnetisches Feld:')
+        magn_tex = TexText(r'$\vec{ B } = \frac{2 \vec{ S }}{{r}^3}$',isolate=[r'\vec{ B }',r'\vec{ S }',r'{r}']).set_color_by_tex_to_color_map(symCols,only_isolated=True)
+        lforce = TexText('Lorentz-Kraft:')
+        lforce_tex = TexText(r'$\vec{ F } = m \vec{ v }\times\vec{ B }$',isolate=[r'\vec{ F }',r'\vec{ v }',r'\vec{ B }']).set_color_by_tex_to_color_map(symCols,only_isolated=True)
+        torque = TexText('Drehmoment:')
+        torque_tex = TexText(r'$\frac{\mathrm{d} \vec{ L }}{\mathrm{d} t} = \vec{ M } = \vec{ r }\times\vec{ F }$',isolate=[r'\vec{ L }',r'\vec{ M }',r'\vec{ r }',r'\vec{ F }']).set_color_by_tex_to_color_map(symCols,only_isolated=True)
+        allg = TexText('Allgemein:')
+        allg_tex1 = TexText(r'$\frac{\mathrm{d} \vec{ L }}{\mathrm{d} t} = \int \mathrm{d}^3r\ \vec{ r }\times\vec{f}_{LT}$',isolate=[r'\vec{ L }',r'\vec{ r }']).set_color_by_tex_to_color_map(symCols,only_isolated=True)
+        allg_tex2 = VGroup(
+            TexText(r'$\vec{f}_{LT} = \rho \vec{ v }\times\vec{ B }(\vec{ r }+\vec{r}_S)$',isolate=[r'\vec{ v }',r'\vec{ B }',r'\vec{ S }',r'\vec{ r }']).set_color_by_tex_to_color_map(symCols,only_isolated=True),
+            TexText(r'$= \frac{\rho}{r_S^3} \left[2 \vec{ v }\times\vec{ S } - \frac{6 (\vec{ S }\cdot\vec{r}_S)}{r_S^2}\vec{ v }\times (\vec{ r }+\vec{r}_S)\right]$',isolate=[r'\vec{ v }',r'\vec{ B }',r'\vec{ S }',r'\vec{ r }']).set_color_by_tex_to_color_map(symCols,only_isolated=True)).arrange()
+        allg_tex3 = TexText(r'$\frac{\mathrm{d} \vec{ L }}{\mathrm{d} t} = \vec{ L }\times\vec{ \Omega }$',isolate=[r'\vec{ L }',r'\vec{ \Omega }']).set_color_by_tex_to_color_map(symCols,only_isolated=True)
+        allg_tex4 = TexText(r'$\vec{ \Omega } = \frac{\vec{ B }(\vec{ r }_S)}{2}$',isolate=[r'\vec{ \Omega }',r'\vec{ B }']).set_color_by_tex_to_color_map(symCols,only_isolated=True)
+        align_mobjs([(drehimp,),(drehimp_tex,),(magn,),(magn_tex,),(lforce,),(lforce_tex,),(torque,),(torque_tex,)],self.slide_title)
+        align_mobjs([(allg,),(allg_tex1,),(allg_tex2,),(allg_tex3,),(allg_tex4,)],self.slide_title)
+        # add arrow from allg_tex1 to allg_tex3, shift allg_tex2 to right of that arrow
+        arr = Arrow(start=allg_tex1[6].get_edge_center(DOWN), end=allg_tex3[6].get_edge_center(UP), buff=0.1, color=FRONTCOL).fix_in_frame()
+        allg_tex2.shift(RIGHT)
+
         probe_arr.remove_updater(rot_spin)
         self.canvas_objs.remove(sphere)
         new_axes = ThreeDAxes(x_range=(-0.5,0.5,0.5),y_range=(-0.5,0.5,0.5),z_range=(-0.5,0.5,0.5))
@@ -805,6 +828,8 @@ class LenseThirringGL(Slide):
             self.frame.animate.reorient(-20,58,0,(0,0,0),2),
             probe.animate.shift((-2,0,0)),
             probe_arr.animate.shift((-2,0,0)),
+            Write(drehimp),
+            Write(drehimp_tex),
             ReplacementTransform(axes,new_axes),
             self.wipe([sphere, lanim_1, lanim_2, precession_circle, precession_arrow],[],return_animation=True))
         self.pause(auto_next=True)
@@ -812,7 +837,7 @@ class LenseThirringGL(Slide):
         
         # B-Vektoren einzeichnen
         bvecs = Group(*[mt.Arrow3D(start=(x,y,-0.25),end=(x,y,0.25),color=symCols[r'\vec{ B }']) for x in np.linspace(-0.5,0.5,2) for y in np.linspace(-0.5,0.5,2)])
-        self.play(ShowCreation(bvecs))
+        self.play(ShowCreation(bvecs),Write(magn),Write(magn_tex))
         self.pause(loop=True)
 
 
@@ -835,7 +860,7 @@ class LenseThirringGL(Slide):
         # resultierende Kraft einzeichnen
         forcevecposs = [(velvecposs[0][0],velvecposs[0][0]+np.array([0.3,0,0])),(velvecposs[1][0],velvecposs[1][0]-np.array([0.3,0,0]))]
         forcevecs = Group(*[mt.Arrow3D(start=start,end=end,tip_length=0.06,color=symCols[r'\vec{ F }']) for start,end in forcevecposs])
-        self.play(ShowCreation(forcevecs))
+        self.play(ShowCreation(forcevecs),Write(lforce),Write(lforce_tex))
         self.pause(loop=True)
 
 
@@ -850,7 +875,7 @@ class LenseThirringGL(Slide):
         torquevecposs = [(torquepos,torquepos+np.array([0,0.2,0])),(torquepos+np.array([0,0.2,0]),torquepos+np.array([0,0.4,0]))]
         torquevecs = Group(*[mt.Arrow3D(start=start,end=end,tip_length=0.06,color=symCols[r'\vec{ M }']) for start,end in torquevecposs])
         self.play(Uncreate(probe))
-        self.play(ShowCreation(posvecs),ShowCreation(torquevecs))
+        self.play(ShowCreation(posvecs),ShowCreation(torquevecs),Write(torque),Write(torque_tex))
         self.pause(loop=True)
 
 
@@ -865,8 +890,35 @@ class LenseThirringGL(Slide):
         self.pause(loop=True)
 
 
-        # TODO: rotate torquevecs,posvecs,velvecs,forcevecs around z-axis
-        self.wait(np.pi/spin)
+        for vecs in [torquevecs,posvecs,velvecs,forcevecs,probe_arr]:
+            vecs.add_updater(lambda obj,dt: obj.rotate(dt*np.pi/4,axis=(0,0,-1),about_point=(0,0,0)))
+        self.wait(8.0)
+        self.pause()
+
+
+        #   Präzession allgemein (84-90)
+        self.setup_new_slide(title='Präzession',cleanup=True)
+        self.play(Write(allg))
+        self.pause()
+
+
+        self.play(Write(allg_tex1))
+        self.pause()
+
+
+        self.play(Write(arr),Write(allg_tex2[0]))
+        self.pause()
+
+
+        self.play(Write(allg_tex2[1]))
+        self.pause()
+
+
+        self.play(Write(allg_tex3))
+        self.pause()
+
+
+        self.play(Write(allg_tex4))
         self.pause()
 
 
