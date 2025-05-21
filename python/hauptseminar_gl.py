@@ -22,15 +22,14 @@ Strukturierung:
  ✓  Problem einer rotierenden Kugelmasse (dichte und stromdichte hinschreiben) (sagen, dass Lösung wie schon in E-dynamik is)
  ✓      Darstellung der E,B Felder (gilt auch für nicht homogene Objekte mit Drehimpuls)
  ✓      Einzelne ausgewählte Trajektorien zeigen
-        Darstellung & Herleitung Präzession
-        Alternative Darstellung über die Raumzeit (-> xy-Ebene -> Präzession)
+ ✓      Alternative Darstellung über die Raumzeit (-> xy-Ebene -> Präzession)
+ ✓      Darstellung & Herleitung Präzession
     Gravity Probe B
     Akkretionsscheibe
     Pulsar
 
     
 TODO:
-mehr slide nummern
 self.pause überprüfen
 rate functions (linear) überprüfen
 
@@ -38,7 +37,18 @@ Trajektorien: Erde kleiner machen (R->r), statt omega S benutzen; damit S gleich
     alternativ: Nikodem überzeugen, dass R=1 wichtig ist, da sonst omega>1 => v > c, was nicht geht
 
 Wichtig zu erwähnen:
-    - EFE sind 16 nichtlineare, gekoppelte Differentialgleichungen
+    - Lense-Thirring-Effekt: Effekte der ART in erster Ordnung für eine rotierende Masse
+    - Geodäten lassen sich aus Minimierung der Weglänge über Wirkungsintegral & Euler-Lagrange-gl. bestimmen
+    - EFE sind 16 nichtlineare, gekoppelte Differentialgleichungen; durch Symmetrien -> 10 DGLs; (außerdem 4 Bianchi-Identitäten)
+    - Linearisierung: Annahmen sagen; durch geschickte Wahl von Potentialen => Maxwell-Gleichungen (bis auf Konstanten)
+    - Kugelmasse: Lösen ist analog zu E-Dynamik
+    - E-Feld wie das einer negativen Punktladung
+    - B-Feld ähnlich dem eines Kreisstroms
+    - Ablenkung der Trajektorie durch Mitrotation
+    - Raumzeit: für jeden Punkt auf dem Gitter wird die zeitliche Entwicklung dargestellt
+    - Newton: Gravitationskraft <=> Raum fällt um uns herum
+    - Präzession: wie ein Grashalm auf Wasser, bei dem die Strömungsgeschwindigkeiten an beiden Enden unterschiedlich sind
+    - Genaue Betrachtung anhand von zwei Punkten auf dem Probekörper
 """
 
 PresentationTitle = 'Lense-Thirring-Effekt'
@@ -51,13 +61,18 @@ Betreuer: Dr. Nikodem Szpak \\
 """
 PresentationContactInfo = 'marvin.henke@stud.uni-due.de'
 PresentationContents = (
-    (0, 'Metrik und Geodäten'),
-    (0, 'Einsteinsche Feldgleichungen'),
-    (0, 'Gravitoelektromagnetismus'),
-    (1, 'Rotierende Kugelmasse'),
+    (0, 'Allgemeine Relativitätstheorie'),
+    (1, 'Metrik und Geodäten'),
+    (1, 'Einsteinsche Feldgleichungen'),
+    (1, 'Gravitoelektromagnetismus'),
+    (0, 'Rotierende Kugelmasse'),
     (1, 'EM-Felder'),
-    (0, 'Trajektorien'),
-    (0, 'Präzession'))
+    (1, 'Trajektorien'),
+    (1, 'Präzession'),
+    (0, 'Aktuelle Forschung'),
+    (1, 'Gravity Probe B'),
+    (1, 'Akkretionsscheibe eines supermassiven Schwarzen Lochs'),
+    (1, 'Binärsystem aus Pulsar und weißem Zwerg'))
 
 DARK_MODE: bool = True
 LIGHT_MODE: bool = False # highly experimental
@@ -93,7 +108,7 @@ class BulletedList(VGroup):
     def __init__(
         self,
         *items: str,
-        buff: float = MED_LARGE_BUFF,
+        buff: float = SMALL_BUFF,
         aligned_edge = LEFT,
         **kwargs
     ):  
@@ -107,6 +122,8 @@ class BulletedList(VGroup):
                 tex_string += r'\end{itemize}'+"\n"
             tex_string += r'\item '+item[1]+"\n"
             ci = item[0]
+        for i in range(ci):
+            tex_string += r'\end{itemize}'+"\n"
         tex_string += r'\end{itemize}'
         kwas1 = default_kwargs_text | default_kwargs_vmobj | kwargs
         tex_text = TexText(tex_string, isolate=labelled_content, **kwas1)
@@ -115,7 +132,9 @@ class BulletedList(VGroup):
         kwas2 = default_kwargs_vmobj | kwargs
         super().__init__(*lines, **kwas2)
 
-        self.arrange(DOWN, buff=buff, aligned_edge=aligned_edge)
+        for i in range(len(labelled_content)):
+            self[i].shift(DOWN*buff*i)
+        #self.arrange(DOWN, center=False, buff=buff, aligned_edge=aligned_edge)
         for i in range(len(items)):
             self[i].shift(RIGHT*DEFAULT_MOBJECT_TO_EDGE_BUFF*items[i][0])
 
@@ -144,8 +163,8 @@ class LenseThirringGL(Slide):
         #kwargs['leave_progress_bars'] = True
         kwargs['camera_config'] = {'background_color':BACKCOL}
         kwargs['camera_config']['light_source_position'] = np.array([10, -10, 10])
-        #kwargs['start_at_animation_number'] = 84
-        #kwargs['end_at_animation_number'] = 61
+        #kwargs['start_at_animation_number'] = 7
+        #kwargs['end_at_animation_number'] = 18
         print(kwargs)
         super().__init__(*args, **kwargs)
         if self.high_quality:
@@ -277,14 +296,18 @@ class LenseThirringGL(Slide):
         self.pause()
 
 
-        # Inhaltsverzeichnis (2-10)
-        Inhalt = BulletedList(*PresentationContents, buff=MED_SMALL_BUFF)
+        # Inhaltsverzeichnis (2-6)
+        Inhalt = BulletedList(*PresentationContents,buff=0)
         Inhalt.to_edge(LEFT)
         Inhalt.fix_in_frame()
+        indended = []
         for istr in range(len(PresentationContents)):
-            self.play(Write(Inhalt[istr]))
-            if istr < len(PresentationContents)-1:
+            if len(indended)>0 and PresentationContents[istr][0] == 0:
+                self.play(*indended)
                 self.pause()
+                indended = []
+            indended.append(Write(Inhalt[istr]))
+        self.play(*indended)
         self.pause()
 
 
@@ -320,13 +343,66 @@ class LenseThirringGL(Slide):
         self.pause()
 
 
-        # Metrik & Geodätengleichung (11-19)
+        # ART (7-17)
+        self.setup_new_slide(title="Allgemeine Relativitätstheorie", cleanup=True)
+        update_back_rects()
+        self.pause()
+
+
+        texts = [
+            (0, 'entwickelt von Albert Einstein'),
+            (0, 'beruht auf der Differentialgeometrie'),
+            (0, 'angewendet bei GPS'),
+            (0, r'beschreibt Gravitation nicht als Kraft $F_{\mathrm{G}}$ sondern \\als Effekt einer vierdimensionalen Raumzeit'),
+            (0, r'Raumzeit ist pseudo-riemannsche \\Mannigfaltigkeit mit Linienelement:')
+        ]
+        Texts = BulletedList(*texts)
+        Texts.next_to(self.slide_title, direction=DOWN, aligned_edge=LEFT)
+        Texts.fix_in_frame()
+        line_el = TexText(r'$\mathrm{d}s^2 = {g}_{\mu\nu}\mathrm{d}{x}^{\mu}\mathrm{d}{x}^{\nu}$', isolate=[r'{g}',r'{x}']).fix_in_frame().set_color_by_tex_to_color_map(symCols)
+        line_el.next_to(Texts[-1],direction=DOWN,aligned_edge=LEFT).shift(RIGHT*DEFAULT_MOBJECT_TO_EDGE_BUFF)
+        for text in Texts:
+            self.play(Write(text))
+            self.pause()
+        self.play(Write(line_el))
+        self.pause()
+
+
+        basesize = 5
+        basepos = RIGHT*4+DOWN*1.5
+        grid_img = ImageMobject('./assets/grid_skizze.png', height=basesize*1.324503311,z_index=-2).fix_in_frame().shift(basepos)
+        grid_back = ImageMobject('./assets/grid_back.png', height=basesize*1.59602649,z_index=-1).fix_in_frame().shift(basepos)
+        back_f = ImageMobject('./assets/Kraft.png', height=basesize,z_index=0).fix_in_frame().shift(basepos)
+        back_r = ImageMobject('./assets/Raumzeit.png', height=basesize,z_index=0).fix_in_frame().shift(basepos)
+        apple_f = ImageMobject('./assets/apple_force.png', height=basesize*0.179470199,z_index=1).fix_in_frame().shift(basepos)
+        apple = ImageMobject('./assets/apple.png', height=basesize*0.179470199,z_index=1).fix_in_frame().shift(basepos)
+        self.add(grid_back)
+        self.play(FadeIn(back_f),FadeIn(apple_f))
+        self.pause(loop=True)
+
+
+        self.play(apple_f.animate.shift(1.2*DOWN),run_time=2.0,rate_func=lambda t: t**2)
+        apple_f.shift(1.2*UP)
+        self.pause()
+
+        self.add(back_r, apple)
+        self.play(FadeOut(apple_f),FadeOut(back_f),FadeIn(grid_img))
+        self.pause(loop=True)
+
+
+        self.play(apple.animate.shift(1.2*DOWN),grid_img.animate.shift(1.2*DOWN),run_time=2.0,rate_func=lambda t: t**2)
+        apple.shift(1.2*UP)
+        grid_img.shift(1.2*UP)
+        self.pause()
+
+
+        # Metrik & Geodätengleichung (18-26)
         self.setup_new_slide(title='Metrik und Geodäten', cleanup=True)
         update_back_rects()
         self.pause()
 
 
-        #   Euklidisch (12-15)
+        #   Euklidisch (19-22)
         fläche_text = TexText(r'Fläche')
         rfunc = TexText(r'$\vec{ x } : \mathbb{R}^2 \rightarrow \mathbb{R}^3$',isolate=[r'\vec{ x }']).set_color_by_tex_to_color_map(symCols)
         rfunc_euclid = TexText(r'$\vec{ x }({u},{v}) = ({u},{v},0)$',isolate=[r'{u}',r'{v}',r'\vec{ x }']).set_color_by_tex_to_color_map(symCols)
@@ -365,7 +441,7 @@ class LenseThirringGL(Slide):
         self.pause(loop=True)
 
 
-        #   Animation euklidischer Raum (16)
+        #   Animation euklidischer Raum (23)
         self.add(dot)
         #camRot.startUpdating()
         self.play(MoveAlongPath(dot,pcd_nc), run_time=4.0,rate_func=linear)
@@ -374,7 +450,7 @@ class LenseThirringGL(Slide):
         self.pause(auto_next=True)
 
 
-        #   Gekrümmter Raum (17-19)
+        #   Gekrümmter Raum (24-26)
         ltt.set_params_gaußian_surface(1/np.sqrt(2),A=2.0)
         _, surface = mt.get_grid_surface(uv_func=lambda u,v: [u,v,ltt.z_gaußian_surface(u,v)], u_range=(-3,3), v_range=(-3,3), grid_size=(8,8), grid_col=FRONTCOL)
         surface.set_color_by_rgba_func(lambda r: get_color_map('viridis')(r[2]/ltt.z_gaußian_surface(0,0)))
@@ -403,7 +479,7 @@ class LenseThirringGL(Slide):
         self.pause()
 
 
-        # EFGl mit Analogie 2D Fläche eingebettet in 3D Raum -> 4D Fläche (20-26)
+        # EFGl mit Analogie 2D Fläche eingebettet in 3D Raum -> 4D Fläche (27-33)
         self.setup_new_slide(title='Einsteinsche Feldgleichungen',cleanup=True)
         update_back_rects()
         text1 = TexText(r'2D Fläche $\rightarrow$ 4D Mannigfaltigkeit')
@@ -422,7 +498,7 @@ class LenseThirringGL(Slide):
         self.pause()
         
 
-        # Linearisierung & Gravitoelektromagnetismus (27-33)
+        # Linearisierung & Gravitoelektromagnetismus (34-40)
         self.setup_new_slide(title='Linearisierung',cleanup=True)
         update_back_rects()
         geod_gl = TexText(r'$\frac{\mathrm{d}^2 {x}^{\lambda}}{\mathrm{d} \tau^2} = -\Gamma^{\lambda}_{\mu \nu}[\bm{g}(\vec{ x })] \frac{\mathrm{d} {x}^{\mu}}{\mathrm{d} \tau} \frac{\mathrm{d} {x}^{\nu}}{\mathrm{d} \tau}$',isolate=[r'{x}',r'\bm{g}',r'\vec{ x }',r'\Gamma']).set_color_by_tex_to_color_map(symCols,only_isolated=True).fix_in_frame()
@@ -471,7 +547,7 @@ class LenseThirringGL(Slide):
         self.pause()
 
 
-        # Rotierende Kugelmasse (34-39)
+        # Rotierende Kugelmasse (41-46)
         self.setup_new_slide(title='Rotierende Kugelmasse', cleanup=True)
         update_back_rects()
         rhoKug = TexText(r'$\rho(|\vec{ x }|) = \rho_0 \Theta(R-|\vec{ x }|)$',isolate=[r'\vec{ x }']).set_color_by_tex_to_color_map(symCols,only_isolated=True)
@@ -526,7 +602,7 @@ class LenseThirringGL(Slide):
         self.pause(auto_next=True)
 
 
-        # EM-Felder (40-45)
+        # EM-Felder (47-52)
         self.play(self.next_slide_title_animation('EM-Felder'))
         update_back_rects()
         self.pause(loop=True)
@@ -573,7 +649,7 @@ class LenseThirringGL(Slide):
         self.pause()
 
 
-        # Trajektorien (46-57)
+        # Trajektorien (53-64)
         self.remove(sls_e)
         self.remove(sls_b)
         camRot.stopUpdating()
@@ -589,9 +665,9 @@ class LenseThirringGL(Slide):
         omega_val = DecimalNumber(0.0, num_decimal_places=2).fix_in_frame()
         align_mobjs([(force,),(omega_text,)],self.slide_title)
         omega_val.next_to(omega_text,RIGHT)
-        self.play(Write(force),Write(omega_text), Write(omega_val), self.offset_3d.animate.set_value(0+0j), sphere.animate.set_opacity(0.2))
-        sphere.deactivate_depth_test()
-        sphere.set_z_index(-10)
+        self.play(Write(force),Write(omega_text), Write(omega_val), self.offset_3d.animate.set_value(0+0j), sphere.animate.scale(0.1))
+        #sphere.deactivate_depth_test()
+        #sphere.set_z_index(-10)
         self.pause()
 
         traj_tol = 1e-8
@@ -600,8 +676,8 @@ class LenseThirringGL(Slide):
             ([0,0,2],[-np.sqrt(0.5),0,0],[0.0,0.712],[18,93.5]),
         ]
         trajs = [
-            mt.CurveDrawer([ltt.get_trajectory(M=ltt.M,R=ltt.R,omega=x0_v0_omega[0][2][0],x0=x0_v0_omega[0][0],v0=x0_v0_omega[0][1],tmax=x0_v0_omega[0][3][0],cputmax=0.4,tol=traj_tol)],randomize_t0s=False),
-            mt.CurveDrawer([ltt.get_trajectory(M=ltt.M,R=ltt.R,omega=x0_v0_omega[1][2][0],x0=x0_v0_omega[1][0],v0=x0_v0_omega[1][1],tmax=x0_v0_omega[1][3][0],cputmax=0.4,tol=traj_tol)],randomize_t0s=False),
+            mt.CurveDrawer([ltt.get_trajectory(M=ltt.M,R=ltt.R,omega=x0_v0_omega[0][2][0],x0=x0_v0_omega[0][0],v0=x0_v0_omega[0][1],tmax=x0_v0_omega[0][3][0],cputmax=2,tol=traj_tol)],randomize_t0s=False),
+            mt.CurveDrawer([ltt.get_trajectory(M=ltt.M,R=ltt.R,omega=x0_v0_omega[1][2][0],x0=x0_v0_omega[1][0],v0=x0_v0_omega[1][1],tmax=x0_v0_omega[1][3][0],cputmax=2,tol=traj_tol)],randomize_t0s=False),
         ]
         current_traj = 0
         omega_tracker = ValueTracker(0.0)
@@ -611,14 +687,14 @@ class LenseThirringGL(Slide):
             omega = omega_tracker.get_value()
             omega_val.set_value(omega)
             traj = trajs[current_traj]
-            traj.set_pcs([ltt.get_trajectory(M=ltt.M,R=ltt.R,omega=omega,x0=x0_v0_omega[current_traj][0],v0=x0_v0_omega[current_traj][1],tmax=tmax_tracker.get_value(),cputmax=0.4,tol=traj_tol)])
+            traj.set_pcs([ltt.get_trajectory(M=ltt.M,R=ltt.R,omega=omega,x0=x0_v0_omega[current_traj][0],v0=x0_v0_omega[current_traj][1],tmax=tmax_tracker.get_value(),cputmax=2,tol=traj_tol)])
             traj.update_graphics()
             sphere_omega = omega*sphere_omega0
         omega_tracker.add_updater(traj_updater)
 
         tmax_tracker.set_value(x0_v0_omega[0][3][0])
         traj_updater(omega_tracker,0)
-        self.play(Write(trajs[0]),run_time=2.0,rate_func=linear)
+        self.play(Write(trajs[0],run_time=2.0),run_time=2.0,rate_func=linear)
         self.pause(auto_next=True)
 
 
@@ -629,13 +705,15 @@ class LenseThirringGL(Slide):
         self.wait(2*np.pi/sphere_omega)
         self.pause()
 
-
+        
+        omega_tracker.remove_updater(traj_updater)
         current_traj = 1
-        tmax_tracker.set_value(x0_v0_omega[1][3][0])
         omega_tracker.set_value(x0_v0_omega[1][2][0])
+        tmax_tracker.set_value(x0_v0_omega[1][3][0])
         traj_updater(omega_tracker,0)
-        self.play(self.next_slide_number_animation(),FadeOut(trajs[0]))
-        self.play(Write(trajs[1]),run_time=2.0,rate_func=linear)
+        self.play(self.next_slide_number_animation(),FadeOut(trajs[0]),sphere.animate.scale(10))
+        self.play(Write(trajs[1],run_time=2.0),run_time=2.0,rate_func=linear)
+        omega_tracker.add_updater(traj_updater)
         self.pause(auto_next=True)
         
 
@@ -659,7 +737,7 @@ class LenseThirringGL(Slide):
         self.pause()
 
 
-        #   Raumzeitdarstellung (58-63)
+        #   Raumzeitdarstellung (65-70)
         sphere_omega = 0.0
         self.setup_new_slide(title='Raumzeitdarstellung',cleanup=True)
         update_back_rects()
@@ -672,8 +750,8 @@ class LenseThirringGL(Slide):
         text_o0 = TexText('bei ', r'$\omega=0$')
         text_o1 = TexText('bei ', r'$\omega=1$')
         align_mobjs([(text_erkl0,),(text_erkl1,),(text_erkl2,),(text_o0,text_o1)],self.slide_title)
-        sphere.apply_depth_test()
-        self.play(sphere.animate.set_opacity(1.0), Write(text_erkl0), Write(text_erkl1), Write(text_erkl2))
+        #sphere.apply_depth_test()
+        self.play(Write(text_erkl0), Write(text_erkl1), Write(text_erkl2))
 
         lines_0 = np.load('./assets/spacetime_sims/lt2d_lines__line_nums=22__subdivisions=100__timesteps=180__tau_max=9.0__R=1.0__M=1.0__omega=0.0.npy')
         print(f'loaded lines with shape {lines_0.shape}')
@@ -721,7 +799,7 @@ class LenseThirringGL(Slide):
         self.pause(auto_next=True)
 
 
-        #  Präzession Intuition (64-71)
+        #  Präzession Intuition (71-78)
         lanim_1.startUpdating(timeScaleF=2.0)
         self.play(self.next_slide_number_animation(), self.next_slide_title_animation('Präzession'), self.wipe([text_erkl0,text_erkl1,text_erkl2,text_o1],[],return_animation=True))
         update_back_rects()
@@ -795,7 +873,7 @@ class LenseThirringGL(Slide):
         self.pause()
 
 
-        #   Präzession Rechnung (72-83)
+        #   Präzession Rechnung (79-90)
         # slidenumber, 3d view nach rechts, kreisel in (0,0,0), Erde & Linien & Kreis & pr_vec weg 
         drehimp = TexText('Drehimpuls:')
         drehimp_tex = TexText(r'$\vec{ L }$',isolate=[r'\vec{ L }']).set_color_by_tex_to_color_map(symCols,only_isolated=True)
@@ -805,7 +883,7 @@ class LenseThirringGL(Slide):
         lforce_tex = TexText(r'$\vec{ F } = m \vec{ v }\times\vec{ B }$',isolate=[r'\vec{ F }',r'\vec{ v }',r'\vec{ B }']).set_color_by_tex_to_color_map(symCols,only_isolated=True)
         torque = TexText('Drehmoment:')
         torque_tex = TexText(r'$\frac{\mathrm{d} \vec{ L }}{\mathrm{d} t} = \vec{ M } = \vec{ r }\times\vec{ F }$',isolate=[r'\vec{ L }',r'\vec{ M }',r'\vec{ r }',r'\vec{ F }']).set_color_by_tex_to_color_map(symCols,only_isolated=True)
-        allg = TexText('Allgemein:')
+        allg = TexText("Allgemeiner für einen ausgedehnten Körper\n" + r'mit der Massendichte $\rho$:')
         allg_tex1 = TexText(r'$\frac{\mathrm{d} \vec{ L }}{\mathrm{d} t} = \int \mathrm{d}^3r\ \vec{ r }\times\vec{f}_{LT}$',isolate=[r'\vec{ L }',r'\vec{ r }']).set_color_by_tex_to_color_map(symCols,only_isolated=True)
         allg_tex2 = VGroup(
             TexText(r'$\vec{f}_{LT} = \rho \vec{ v }\times\vec{ B }(\vec{ r }+\vec{r}_S)$',isolate=[r'\vec{ v }',r'\vec{ B }',r'\vec{ S }',r'\vec{ r }']).set_color_by_tex_to_color_map(symCols,only_isolated=True),
@@ -896,7 +974,7 @@ class LenseThirringGL(Slide):
         self.pause()
 
 
-        #   Präzession allgemein (84-90)
+        #   Präzession allgemein (91-97)
         self.setup_new_slide(title='Präzession',cleanup=True)
         self.play(Write(allg))
         self.pause()
