@@ -24,14 +24,17 @@ Strukturierung:
  ✓      Einzelne ausgewählte Trajektorien zeigen
  ✓      Alternative Darstellung über die Raumzeit (-> xy-Ebene -> Präzession)
  ✓      Darstellung & Herleitung Präzession
-    Gravity Probe B
-    Akkretionsscheibe
+ ✓  Gravity Probe B
+(✓) Akkretionsscheibe
     Pulsar
 
     
 TODO:
+notes hinzufügen
 self.pause überprüfen
 rate functions (linear) überprüfen
+
+Trajektorien Gas wie Schwarzes Loch simulieren
 
 Trajektorien: Erde kleiner machen (R->r), statt omega S benutzen; damit S gleich bleibt => (S_0 = 2/5*omega, S_1 = S_0 * (r/R)^2)
     alternativ: Nikodem überzeugen, dass R=1 wichtig ist, da sonst omega>1 => v > c, was nicht geht
@@ -49,6 +52,7 @@ Wichtig zu erwähnen:
     - Newton: Gravitationskraft <=> Raum fällt um uns herum
     - Präzession: wie ein Grashalm auf Wasser, bei dem die Strömungsgeschwindigkeiten an beiden Enden unterschiedlich sind
     - Genaue Betrachtung anhand von zwei Punkten auf dem Probekörper
+    - Gravity Probe B: Winkelauflösung (1macs) für Stecknadelkopf im Abstand von 1.000 km; 6601,8 ± 18,3 (0,28 %), bzw. 37,2 ± 7,2 (19 %)
 """
 
 PresentationTitle = 'Lense-Thirring-Effekt'
@@ -136,7 +140,7 @@ class BulletedList(VGroup):
             self[i].shift(DOWN*buff*i)
         #self.arrange(DOWN, center=False, buff=buff, aligned_edge=aligned_edge)
         for i in range(len(items)):
-            self[i].shift(RIGHT*DEFAULT_MOBJECT_TO_EDGE_BUFF*items[i][0])
+            self[i].shift(0.5*RIGHT*DEFAULT_MOBJECT_TO_EDGE_BUFF*items[i][0])
 
     def fade_all_but(self, index: int, opacity: float = 0.25) -> None:
         for i, part in enumerate(self.submobjects):
@@ -360,7 +364,7 @@ class LenseThirringGL(Slide):
         Texts.next_to(self.slide_title, direction=DOWN, aligned_edge=LEFT)
         Texts.fix_in_frame()
         line_el = TexText(r'$\mathrm{d}s^2 = {g}_{\mu\nu}\mathrm{d}{x}^{\mu}\mathrm{d}{x}^{\nu}$', isolate=[r'{g}',r'{x}']).fix_in_frame().set_color_by_tex_to_color_map(symCols)
-        line_el.next_to(Texts[-1],direction=DOWN,aligned_edge=LEFT).shift(RIGHT*DEFAULT_MOBJECT_TO_EDGE_BUFF)
+        line_el.next_to(Texts[-1],direction=DOWN,aligned_edge=LEFT).shift(0.5*RIGHT*DEFAULT_MOBJECT_TO_EDGE_BUFF)
         for text in Texts:
             self.play(Write(text))
             self.pause()
@@ -1000,6 +1004,63 @@ class LenseThirringGL(Slide):
         self.pause()
 
 
+        self.setup_new_slide(title='Gravity Probe B', cleanup=True)
+        overview = ImageMobject('./assets/gpb_overview.jpg',height=FRAME_HEIGHT*0.6,z_index=-2).fix_in_frame().to_edge(RIGHT,buff=0).shift(DOWN*0.7)
+        img_creds = TexText('Gravity Probe B Team, Stanford, NASA',font_size=CONTENT_FONT_SIZE*0.5).fix_in_frame().next_to(overview.get_edge_center(DOWN),direction=DOWN,buff=SMALL_BUFF)
+        texts = [
+            (0, r'Missionsdauer $\sim$ 6 Jahre (2004-2010)'),
+            (0, r'4 Gyroskope gerichtet auf IM Pegasi'),
+            (0, r'Zwei relativistische Effekte:'),
+            (1, r'de-Sitter-Effekt'),
+            (1, r'Lense-Thirring-Effekt'),
+            (0, r'Ergebnisse:'),
+            (1, r'$(6601.8 \pm 18.3)\,\mathrm{macs}/\mathrm{yr}$'),
+            (1, r'$(37.2 \pm 7.2)\,\mathrm{macs}/\mathrm{yr}$')
+        ]
+        Texts = BulletedList(*texts)
+        Texts.next_to(self.slide_title, direction=DOWN, aligned_edge=LEFT)
+        Texts.fix_in_frame()
+        self.play(FadeIn(overview),Write(img_creds))
+        self.pause()
+
+
+        for text in Texts:
+            self.play(Write(text))
+            self.pause()
+        
+        
+        self.setup_new_slide(title=r'Akkretionsscheibe (AS) eines\\supermassiven Schwarzen Lochs (SL)',cleanup=True)
+        self.pause()
+
+
+        texts = [
+            (0, r'Entsteht durch das Zerreißen eines Sterns durch das SL'),
+            (0, r'Rotationsachse der AK ist gekippt gegenüber der des SL'),
+            (0, r'Hochfrequentes Röntgen-Monitoring liefert Zeitreihe'),
+            (1, r'$\sim 17$ Tage Periodizität in den ersten $\sim 130$ Tagen'),
+            (0, r'statistische Signifikanz über Monte-Carlo-Simulationen $>3.9\sigma$')
+        ]
+        Texts = BulletedList(*texts)
+        Texts.next_to(self.slide_title, direction=DOWN, aligned_edge=LEFT)
+        Texts.fix_in_frame()
+        for text in Texts:
+            self.play(Write(text))
+            self.pause()
+
+
+        self.setup_new_slide(title=r'Binärsystem aus Pulsar\\und weißem Zwerg',cleanup=True)
+        self.pause()
+
+        
+        #texts = []
+        #Texts = BulletedList(*texts)
+        #Texts.next_to(self.slide_title, direction=DOWN, aligned_edge=LEFT)
+        #Texts.fix_in_frame()
+        #for text in Texts:
+        #    self.play(Write(text))
+        #    self.pause()
+
+
     def get_non_canvas_mobjs(self):
         return [mobj for mobj in self.get_top_level_mobjects() if mobj not in self.canvas_objs]
 
@@ -1019,7 +1080,7 @@ class LenseThirringGL(Slide):
         )
 
     def next_slide_title_animation(self, title):
-        newT = TexText(rf"\textbf{{{title}}}", font_size=TITLE_FONT_SIZE).move_to(self.slide_title, UP).align_to(self.slide_title, LEFT)
+        newT = TexText(rf"\textbf{{{title}}}", alignment='', font_size=TITLE_FONT_SIZE).move_to(self.slide_title, UP).align_to(self.slide_title, LEFT)
         newT.fix_in_frame()
         return Transform(
             self.slide_title,
