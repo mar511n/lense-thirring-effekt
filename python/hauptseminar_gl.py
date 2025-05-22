@@ -167,8 +167,8 @@ class LenseThirringGL(Slide):
         #kwargs['leave_progress_bars'] = True
         kwargs['camera_config'] = {'background_color':BACKCOL}
         kwargs['camera_config']['light_source_position'] = np.array([10, -10, 10])
-        #kwargs['start_at_animation_number'] = 7
-        #kwargs['end_at_animation_number'] = 18
+        #kwargs['start_at_animation_number'] = 65
+        #kwargs['end_at_animation_number'] = 70
         print(kwargs)
         super().__init__(*args, **kwargs)
         if self.high_quality:
@@ -374,8 +374,8 @@ class LenseThirringGL(Slide):
 
         basesize = 5
         basepos = RIGHT*4+DOWN*1.5
-        grid_img = ImageMobject('./assets/grid_skizze.png', height=basesize*1.324503311,z_index=-2).fix_in_frame().shift(basepos)
-        grid_back = ImageMobject('./assets/grid_back.png', height=basesize*1.59602649,z_index=-1).fix_in_frame().shift(basepos)
+        grid_img = ImageMobject('./assets/grid_skizze.png' if Theme else './assets/grid_skizze_w.png', height=basesize*1.324503311,z_index=-2).fix_in_frame().shift(basepos)
+        grid_back = ImageMobject('./assets/grid_back.png' if Theme else './assets/grid_back_w.png', height=basesize*1.59602649,z_index=-1).fix_in_frame().shift(basepos)
         back_f = ImageMobject('./assets/Kraft.png', height=basesize,z_index=0).fix_in_frame().shift(basepos)
         back_r = ImageMobject('./assets/Raumzeit.png', height=basesize,z_index=0).fix_in_frame().shift(basepos)
         apple_f = ImageMobject('./assets/apple_force.png', height=basesize*0.179470199,z_index=1).fix_in_frame().shift(basepos)
@@ -761,8 +761,8 @@ class LenseThirringGL(Slide):
         print(f'loaded lines with shape {lines_0.shape}')
         lines_1 = np.load('./assets/spacetime_sims/lt2d_lines__line_nums=22__subdivisions=100__timesteps=180__tau_max=9.0__R=1.0__M=1.0__omega=1.0.npy')
         print(f'loaded lines with shape {lines_1.shape}')
-        lanim_0 = mt.LineAnim(np.linspace(0,9.0,lines_0.shape[1]),lines_0,z_index=-1)
-        lanim_1 = mt.LineAnim(np.linspace(0,9.0,lines_1.shape[1]),lines_1,z_index=-1)
+        lanim_0 = mt.LineAnim(np.linspace(0,9.0,lines_0.shape[1]),lines_0,z_index=0,basecolor=FRONTCOL)
+        lanim_1 = mt.LineAnim(np.linspace(0,9.0,lines_1.shape[1]),lines_1,z_index=0,basecolor=FRONTCOL)
         lanim_0.updateVMobjs(0,force=True)
         lanim_1.updateVMobjs(0,force=True)
         # overlap square from (-20,-20,0.1) to (20,20,0.1) except for the region between (-3,-3,0.1) and (3,3,0.1)
@@ -779,8 +779,8 @@ class LenseThirringGL(Slide):
             (olaps,-olaps,0.1),
             (-olaps,-olaps,0.1),
         )
-        overlap = Polygon(*verts, fill_color=BACKCOL, fill_opacity=1.0, stroke_width=0.0).apply_depth_test()
-        olapedge = Polygon(*verts[5:-1], fill_opacity=0.0, stroke_width=DEFAULT_STROKE_WIDTH, stroke_color=FRONTCOL)
+        overlap = Polygon(*verts, fill_color=BACKCOL, fill_opacity=1.0, stroke_width=0.0,z_index=1)
+        olapedge = Polygon(*verts[5:-1], fill_opacity=0.0, stroke_width=DEFAULT_STROKE_WIDTH, stroke_color=FRONTCOL,z_index=2)
         self.add(overlap,olapedge)
         self.play(Write(text_o0), Write(lanim_0))
         self.pause(loop=True)
@@ -838,7 +838,7 @@ class LenseThirringGL(Slide):
 
         lines_2 = np.load('./assets/spacetime_sims/lt2d_lines__line_nums=20__subdivisions=100__timesteps=180__tau_max=9.0__R=1.0__M=1.0__omega=1.0.npy')
         print(f'loaded lines with shape {lines_2.shape}')
-        lanim_2 = mt.LineAnim(np.linspace(0,9.0,lines_2.shape[1]),lines_2,z_index=-1)
+        lanim_2 = mt.LineAnim(np.linspace(0,9.0,lines_2.shape[1]),lines_2,z_index=-1,basecolor=FRONTCOL)
         lanim_2.updateVMobjs(0,force=True)
 
         sphere_omega = 0.0

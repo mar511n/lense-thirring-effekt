@@ -56,7 +56,7 @@ class LineAnim(VGroup):
     lines.shape = (line_nums, timesteps, subdivisions, 3)
     color_values.shape = lines.shape
     """
-    def __init__(self, ts, lines, color_values=None, cmap="viridis", repeat=True, depth_test=True, **kwargs):
+    def __init__(self, ts, lines, color_values=None, cmap="viridis", repeat=True, depth_test=True, basecolor=None, **kwargs):
         """
         TODO: color_values has not been tested yet...
         """
@@ -69,7 +69,7 @@ class LineAnim(VGroup):
         self.currentI = 0
         self.t_max = np.max(ts)
         self.repeat = repeat
-        vmobjs = [VMobject() for li in range(self.line_nums)]
+        vmobjs = [VMobject(color=basecolor) for li in range(self.line_nums)]
         super().__init__(vmobjs, **kwargs)
         self.cmap = get_color_map(cmap)
         if color_values is not None:
