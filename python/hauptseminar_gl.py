@@ -6,6 +6,7 @@ import scipy.integrate as spint
 import scipy.interpolate as spinter
 import manim_tools as mt
 import lense_thirring_tools as ltt
+import os
 import cv2
 import re
 
@@ -25,16 +26,20 @@ Strukturierung:
  ✓      Alternative Darstellung über die Raumzeit (-> xy-Ebene -> Präzession)
  ✓      Darstellung & Herleitung Präzession
  ✓  Gravity Probe B
-(✓) Akkretionsscheibe
+ ✓  Akkretionsscheibe
     Pulsar
 
     
 TODO:
+Zusammenfassung schreiben
+
+Rechnungen Akkretionsscheibe machen
 notes hinzufügen
+Trajektorien Gas wie Schwarzes Loch simulieren
+oder alternative alte gas sim nehmen
+
 self.pause überprüfen
 rate functions (linear) überprüfen
-
-Trajektorien Gas wie Schwarzes Loch simulieren
 
 Trajektorien: Erde kleiner machen (R->r), statt omega S benutzen; damit S gleich bleibt => (S_0 = 2/5*omega, S_1 = S_0 * (r/R)^2)
     alternativ: Nikodem überzeugen, dass R=1 wichtig ist, da sonst omega>1 => v > c, was nicht geht
@@ -52,7 +57,15 @@ Wichtig zu erwähnen:
     - Newton: Gravitationskraft <=> Raum fällt um uns herum
     - Präzession: wie ein Grashalm auf Wasser, bei dem die Strömungsgeschwindigkeiten an beiden Enden unterschiedlich sind
     - Genaue Betrachtung anhand von zwei Punkten auf dem Probekörper
-    - Gravity Probe B: Winkelauflösung (1macs) für Stecknadelkopf im Abstand von 1.000 km; 6601,8 ± 18,3 (0,28 %), bzw. 37,2 ± 7,2 (19 %)
+    - Gravity Probe B: Winkelauflösung (1macs) für Stecknadelkopf im Abstand von 1.000 km
+        Ergebnisse: 6601,8 ± 18,3 (0,28 %), bzw. 37,2 ± 7,2 (19 %)
+    - Akkretionsscheibe: Disk tearing wird vernachlässigt, da angenommen wird, dass die disk heiß genug ist, sodass warp waves für rigid body Präzession sorgen.
+        Ansonsten Ringe mit unterschiedlichen Präzessionsgeschwindigkeiten.
+    - Binary system: 
+        Drehimpuls von WD ist ca. 100 mal so groß wie der des NS
+        Beobachtet wird die projizierten Halbachse des Orbits
+        Der Orbit des NS hat Drehimpuls und präzediert deswegen aufgrund des LT-Effekts
+        Die projizierte Halbachse wird über Jahre durch Pulsar timing gemessen (Time of Arrival (TOA) variiert mit Abstand zur Erde)
 """
 
 PresentationTitle = 'Lense-Thirring-Effekt'
@@ -65,18 +78,18 @@ Betreuer: Dr. Nikodem Szpak \\
 """
 PresentationContactInfo = 'marvin.henke@stud.uni-due.de'
 PresentationContents = (
-    (0, 'Allgemeine Relativitätstheorie'),
-    (1, 'Metrik und Geodäten'),
-    (1, 'Einsteinsche Feldgleichungen'),
-    (1, 'Gravitoelektromagnetismus'),
-    (0, 'Rotierende Kugelmasse'),
-    (1, 'EM-Felder'),
-    (1, 'Trajektorien'),
-    (1, 'Präzession'),
-    (0, 'Aktuelle Forschung'),
-    (1, 'Gravity Probe B'),
-    (1, 'Akkretionsscheibe eines supermassiven Schwarzen Lochs'),
-    (1, 'Binärsystem aus Pulsar und weißem Zwerg'))
+    (0, ' ', 'Allgemeine Relativitätstheorie'),
+    (1, ' ', 'Metrik und Geodäten'),
+    (1, ' ', 'Einsteinsche Feldgleichungen'),
+    (1, ' ', 'Gravitoelektromagnetismus'),
+    (0, ' ', 'Rotierende Kugelmasse'),
+    (1, ' ', 'EM-Felder'),
+    (1, ' ', 'Trajektorien'),
+    (1, ' ', 'Präzession'),
+    (0, ' ', 'Aktuelle Forschung'),
+    (1, ' ', 'Gravity Probe B'),
+    (1, ' ', 'Akkretionsscheibe eines supermassiven Schwarzen Lochs'),
+    (1, ' ', 'Binärsystem aus Pulsar und weißem Zwerg'))
 
 DARK_MODE: bool = True
 LIGHT_MODE: bool = False # highly experimental
@@ -116,7 +129,7 @@ class BulletedList(VGroup):
         aligned_edge = LEFT,
         **kwargs
     ):  
-        labelled_content = [r'\item '+item[1] for item in items]
+        labelled_content = [r'\item'+item[1]+item[2] for item in items]
         tex_string = r'\begin{itemize}'+"\n"
         ci = items[0][0]
         for item in items:
@@ -124,7 +137,7 @@ class BulletedList(VGroup):
                 tex_string += r'\begin{itemize}'+"\n"
             elif item[0] < ci:
                 tex_string += r'\end{itemize}'+"\n"
-            tex_string += r'\item '+item[1]+"\n"
+            tex_string += r'\item'+item[1]+item[2]+"\n"
             ci = item[0]
         for i in range(ci):
             tex_string += r'\end{itemize}'+"\n"
@@ -140,7 +153,7 @@ class BulletedList(VGroup):
             self[i].shift(DOWN*buff*i)
         #self.arrange(DOWN, center=False, buff=buff, aligned_edge=aligned_edge)
         for i in range(len(items)):
-            self[i].shift(0.5*RIGHT*DEFAULT_MOBJECT_TO_EDGE_BUFF*items[i][0])
+            self[i].shift(0.25*RIGHT*DEFAULT_MOBJECT_TO_EDGE_BUFF*items[i][0])
 
     def fade_all_but(self, index: int, opacity: float = 0.25) -> None:
         for i, part in enumerate(self.submobjects):
@@ -167,8 +180,8 @@ class LenseThirringGL(Slide):
         #kwargs['leave_progress_bars'] = True
         kwargs['camera_config'] = {'background_color':BACKCOL}
         kwargs['camera_config']['light_source_position'] = np.array([10, -10, 10])
-        #kwargs['start_at_animation_number'] = 65
-        #kwargs['end_at_animation_number'] = 70
+        #kwargs['start_at_animation_number'] = 7
+        #kwargs['end_at_animation_number'] = 20
         print(kwargs)
         super().__init__(*args, **kwargs)
         if self.high_quality:
@@ -340,13 +353,13 @@ class LenseThirringGL(Slide):
                 rect = SurroundingRectangle(obj, color=BACKCOL, fill_opacity=0.6, stroke_width=0,z_index=self.z_idx_fix-1)
                 rect.fix_in_frame()
                 back_rects.append(rect)
-            back_rects_vmobj = VGroup(*back_rects)
+            back_rects_vmobj = VGroup(*back_rects,z_index=self.z_idx_fix-1)
             self.add(back_rects_vmobj)
             self.canvas_objs.append(back_rects_vmobj)
         update_back_rects()
         self.pause()
 
-
+        
         # ART (7-17)
         self.setup_new_slide(title="Allgemeine Relativitätstheorie", cleanup=True)
         update_back_rects()
@@ -354,11 +367,11 @@ class LenseThirringGL(Slide):
 
 
         texts = [
-            (0, 'entwickelt von Albert Einstein'),
-            (0, 'beruht auf der Differentialgeometrie'),
-            (0, 'angewendet bei GPS'),
-            (0, r'beschreibt Gravitation nicht als Kraft $F_{\mathrm{G}}$ sondern \\als Effekt einer vierdimensionalen Raumzeit'),
-            (0, r'Raumzeit ist pseudo-riemannsche \\Mannigfaltigkeit mit Linienelement:')
+            (0, ' ', 'entwickelt von Albert Einstein'),
+            (0, ' ', 'beruht auf der Differentialgeometrie'),
+            (0, ' ', 'angewendet bei GPS'),
+            (0, ' ', r'beschreibt Gravitation nicht als Kraft $F_{\mathrm{G}}$ sondern \\als Effekt einer vierdimensionalen Raumzeit'),
+            (0, ' ', r'Raumzeit ist pseudo-riemannsche \\Mannigfaltigkeit mit Linienelement:')
         ]
         Texts = BulletedList(*texts)
         Texts.next_to(self.slide_title, direction=DOWN, aligned_edge=LEFT)
@@ -740,7 +753,7 @@ class LenseThirringGL(Slide):
         omega_tracker.remove_updater(traj_updater)
         self.pause()
 
-
+        
         #   Raumzeitdarstellung (65-70)
         sphere_omega = 0.0
         self.setup_new_slide(title='Raumzeitdarstellung',cleanup=True)
@@ -875,7 +888,7 @@ class LenseThirringGL(Slide):
         lanim_1.stopUpdating()
         lanim_2.stopUpdating()
         self.pause()
-
+        
 
         #   Präzession Rechnung (79-90)
         # slidenumber, 3d view nach rechts, kreisel in (0,0,0), Erde & Linien & Kreis & pr_vec weg 
@@ -887,18 +900,7 @@ class LenseThirringGL(Slide):
         lforce_tex = TexText(r'$\vec{ F } = m \vec{ v }\times\vec{ B }$',isolate=[r'\vec{ F }',r'\vec{ v }',r'\vec{ B }']).set_color_by_tex_to_color_map(symCols,only_isolated=True)
         torque = TexText('Drehmoment:')
         torque_tex = TexText(r'$\frac{\mathrm{d} \vec{ L }}{\mathrm{d} t} = \vec{ M } = \vec{ r }\times\vec{ F }$',isolate=[r'\vec{ L }',r'\vec{ M }',r'\vec{ r }',r'\vec{ F }']).set_color_by_tex_to_color_map(symCols,only_isolated=True)
-        allg = TexText("Allgemeiner für einen ausgedehnten Körper\n" + r'mit der Massendichte $\rho$:')
-        allg_tex1 = TexText(r'$\frac{\mathrm{d} \vec{ L }}{\mathrm{d} t} = \int \mathrm{d}^3r\ \vec{ r }\times\vec{f}_{LT}$',isolate=[r'\vec{ L }',r'\vec{ r }']).set_color_by_tex_to_color_map(symCols,only_isolated=True)
-        allg_tex2 = VGroup(
-            TexText(r'$\vec{f}_{LT} = \rho \vec{ v }\times\vec{ B }(\vec{ r }+\vec{r}_S)$',isolate=[r'\vec{ v }',r'\vec{ B }',r'\vec{ S }',r'\vec{ r }']).set_color_by_tex_to_color_map(symCols,only_isolated=True),
-            TexText(r'$= \frac{\rho}{r_S^3} \left[2 \vec{ v }\times\vec{ S } - \frac{6 (\vec{ S }\cdot\vec{r}_S)}{r_S^2}\vec{ v }\times (\vec{ r }+\vec{r}_S)\right]$',isolate=[r'\vec{ v }',r'\vec{ B }',r'\vec{ S }',r'\vec{ r }']).set_color_by_tex_to_color_map(symCols,only_isolated=True)).arrange()
-        allg_tex3 = TexText(r'$\frac{\mathrm{d} \vec{ L }}{\mathrm{d} t} = \vec{ L }\times\vec{ \Omega }$',isolate=[r'\vec{ L }',r'\vec{ \Omega }']).set_color_by_tex_to_color_map(symCols,only_isolated=True)
-        allg_tex4 = TexText(r'$\vec{ \Omega } = \frac{\vec{ B }(\vec{ r }_S)}{2}$',isolate=[r'\vec{ \Omega }',r'\vec{ B }']).set_color_by_tex_to_color_map(symCols,only_isolated=True)
         align_mobjs([(drehimp,),(drehimp_tex,),(magn,),(magn_tex,),(lforce,),(lforce_tex,),(torque,),(torque_tex,)],self.slide_title)
-        align_mobjs([(allg,),(allg_tex1,),(allg_tex2,),(allg_tex3,),(allg_tex4,)],self.slide_title)
-        # add arrow from allg_tex1 to allg_tex3, shift allg_tex2 to right of that arrow
-        arr = Arrow(start=allg_tex1[6].get_edge_center(DOWN), end=allg_tex3[6].get_edge_center(UP), buff=0.1, color=FRONTCOL).fix_in_frame()
-        allg_tex2.shift(RIGHT)
 
         probe_arr.remove_updater(rot_spin)
         self.canvas_objs.remove(sphere)
@@ -976,11 +978,42 @@ class LenseThirringGL(Slide):
             vecs.add_updater(lambda obj,dt: obj.rotate(dt*np.pi/4,axis=(0,0,-1),about_point=(0,0,0)))
         self.wait(8.0)
         self.pause()
+        
 
-
-        #   Präzession allgemein (91-97)
+        #   Präzession allgemein (91-)
         self.setup_new_slide(title='Präzession',cleanup=True)
-        self.play(Write(allg))
+        update_back_rects()
+        self.pause()
+
+
+        self.frame.reorient(0,0,0,(0,0,0),FRAME_HEIGHT)
+        day_texture = "./assets/Whole_world_-_land_and_oceans.jpg"
+        night_texture = "./assets/The_earth_at_night.jpg"
+        sphere = Sphere(radius=ltt.R)
+        sphere = TexturedSurface(sphere, day_texture, night_texture,z_index=-10, depth_test=False).rotate(PI/2,LEFT)
+        sphere.move_to((-0.2*FRAME_WIDTH,-0.5*FRAME_HEIGHT,-5))
+        probe = Sphere(color=BLUE_D,radius=0.8,z_index=-10)
+        probe.move_to((0.2*FRAME_WIDTH,-0.3*FRAME_HEIGHT,0))
+        rS = mt.Arrow3D(sphere.get_center(), probe.get_center(), color=FRONTCOL, z_index=1, depth_test=False)
+        rr = mt.Arrow3D(probe.get_center(), probe.get_center()+UP*0.7, color=FRONTCOL, z_index=1, depth_test=False)
+        rG = mt.Arrow3D(sphere.get_center(), probe.get_center()+UP*0.7, color=FRONTCOL, z_index=1, depth_test=False)
+        rS_l = TexText(r'$r_S$',fix_in_frame=False).move_to(probe.get_center()+1.2*LEFT+0.3*DOWN)
+        rr_l = TexText(r'$r$',fix_in_frame=False).move_to(probe.get_center()+0.3*RIGHT+UP*0.3)
+        rG_l = TexText(r'$r_G$',fix_in_frame=False).move_to(probe.get_center()+1.3*LEFT+0.8*UP)
+        allg = TexText("Allgemeiner für einen ausgedehnten Körper\n" + r'mit der Massendichte $\rho$:')
+        allg_tex1 = TexText(r'$\frac{\mathrm{d} \vec{ L }}{\mathrm{d} t} = \int \mathrm{d}^3r\ \vec{ r }\times\vec{f}_{LT}$',isolate=[r'\vec{ L }',r'\vec{ r }']).set_color_by_tex_to_color_map(symCols,only_isolated=True)
+        allg_näh = TexText(r'Näherungen: $r_G\approx r_S$ und $\vec{ S }\cdot\vec{r}_G\approx\vec{ S }\cdot\vec{r}_S$', isolate=[r'\vec{ S }']).set_color_by_tex_to_color_map(symCols,only_isolated=True)
+        allg_tex2 = VGroup(
+            TexText(r'$\vec{f}_{LT} = \rho \vec{ v }\times\vec{ B }(\vec{ r }+\vec{r}_S)$',isolate=[r'\vec{ v }',r'\vec{ B }',r'\vec{ S }',r'\vec{ r }']).set_color_by_tex_to_color_map(symCols,only_isolated=True),
+            TexText(r'$= \frac{\rho}{r_S^3} \left[2 \vec{ v }\times\vec{ S } - \frac{6 (\vec{ S }\cdot\vec{r}_S)}{r_S^2}\vec{ v }\times (\vec{ r }+\vec{r}_S)\right]$',isolate=[r'\vec{ v }',r'\vec{ B }',r'\vec{ S }',r'\vec{ r }']).set_color_by_tex_to_color_map(symCols,only_isolated=True)).arrange()
+        allg_tex3 = TexText(r'$\frac{\mathrm{d} \vec{ L }}{\mathrm{d} t} = \vec{ L }\times\vec{ \Omega }$',isolate=[r'\vec{ L }',r'\vec{ \Omega }']).set_color_by_tex_to_color_map(symCols,only_isolated=True)
+        allg_tex4 = TexText(r'$\vec{ \Omega } = \frac{\vec{ B }(\vec{ r }_S)}{2}$',isolate=[r'\vec{ \Omega }',r'\vec{ B }']).set_color_by_tex_to_color_map(symCols,only_isolated=True)
+        align_mobjs([(allg,),(allg_tex1,),(allg_näh,),(allg_tex2,),(allg_tex3,),(allg_tex4,)],self.slide_title)
+        # add arrow from allg_tex1 to allg_tex3, shift allg_tex2 to right of that arrow
+        arr = Arrow(start=allg_tex1[6].get_edge_center(DOWN), end=allg_tex3[6].get_edge_center(UP), buff=0.1, color=FRONTCOL).fix_in_frame()
+        allg_tex2.shift(RIGHT)
+        allg_näh.shift(RIGHT)
+        self.play(Write(allg),ShowCreation(sphere),ShowCreation(probe),ShowCreation(rS),ShowCreation(rr),ShowCreation(rG),Write(rS_l),Write(rr_l),Write(rG_l))
         self.pause()
 
 
@@ -988,7 +1021,11 @@ class LenseThirringGL(Slide):
         self.pause()
 
 
-        self.play(Write(arr),Write(allg_tex2[0]))
+        self.play(Write(arr),Write(allg_näh))
+        self.pause()
+
+
+        self.play(Write(allg_tex2[0]))
         self.pause()
 
 
@@ -1002,20 +1039,21 @@ class LenseThirringGL(Slide):
 
         self.play(Write(allg_tex4))
         self.pause()
-
+        
 
         self.setup_new_slide(title='Gravity Probe B', cleanup=True)
+        update_back_rects()
         overview = ImageMobject('./assets/gpb_overview.jpg',height=FRAME_HEIGHT*0.6,z_index=-2).fix_in_frame().to_edge(RIGHT,buff=0).shift(DOWN*0.7)
         img_creds = TexText('Gravity Probe B Team, Stanford, NASA',font_size=CONTENT_FONT_SIZE*0.5).fix_in_frame().next_to(overview.get_edge_center(DOWN),direction=DOWN,buff=SMALL_BUFF)
         texts = [
-            (0, r'Missionsdauer $\sim$ 6 Jahre (2004-2010)'),
-            (0, r'4 Gyroskope gerichtet auf IM Pegasi'),
-            (0, r'Zwei relativistische Effekte:'),
-            (1, r'de-Sitter-Effekt'),
-            (1, r'Lense-Thirring-Effekt'),
-            (0, r'Ergebnisse:'),
-            (1, r'$(6601.8 \pm 18.3)\,\mathrm{macs}/\mathrm{yr}$'),
-            (1, r'$(37.2 \pm 7.2)\,\mathrm{macs}/\mathrm{yr}$')
+            (0, ' ', r'Missionsdauer $\sim$ 6 Jahre (2004-2010)'),
+            (0, ' ', r'4 Gyroskope gerichtet auf IM Pegasi'),
+            (0, ' ', r'Zwei relativistische Effekte:'),
+            (1, ' ', r'de-Sitter-Effekt'),
+            (1, ' ', r'Lense-Thirring-Effekt'),
+            (0, ' ', r'Ergebnisse:'),
+            (1, ' ', r'$(6601.8 \pm 18.3)\,\mathrm{macs}/\mathrm{yr}$'),
+            (1, ' ', r'$(37.2 \pm 7.2)\,\mathrm{macs}/\mathrm{yr}$')
         ]
         Texts = BulletedList(*texts)
         Texts.next_to(self.slide_title, direction=DOWN, aligned_edge=LEFT)
@@ -1030,15 +1068,80 @@ class LenseThirringGL(Slide):
         
         
         self.setup_new_slide(title=r'Akkretionsscheibe (AS) eines\\supermassiven Schwarzen Lochs (SL)',cleanup=True)
+        update_back_rects()
+        self.pause()
+
+        
+        back = FullScreenRectangle(fill_color=BACKCOL,z_index=self.z_idx_fix+1).fix_in_frame().shift(UP)
+        frame_img, cap, updater = self.make_video('./assets/tde.mov', update_period=1, z_index=self.z_idx_fix + 2, write_imgs=True)
+        frame_img.set_height(FRAME_HEIGHT*0.85)
+        video_caption = TexText(r"\mbox{Tidal Disruption Event, NASA's Goddard Space Flight Center/Chris Smith (USRA/GESTAR)}",font_size=0.5*CONTENT_FONT_SIZE).fix_in_frame().to_edge(UP,buff=MED_SMALL_BUFF)
+        video_caption.z_index = self.z_idx_fix + 3
+        self.play(FadeIn(back))
+        self.play(FadeIn(frame_img), Write(video_caption))
+        self.remove(Texts)
+        self.pause()
+
+
+        frame_img.add_updater(updater)
+        self.wait(14.0)
+        self.pause()
+
+
+        self.play(self.wipe(self.get_non_canvas_mobjs(),[],return_animation=True))
         self.pause()
 
 
         texts = [
-            (0, r'Entsteht durch das Zerreißen eines Sterns durch das SL'),
-            (0, r'Rotationsachse der AK ist gekippt gegenüber der des SL'),
-            (0, r'Hochfrequentes Röntgen-Monitoring liefert Zeitreihe'),
-            (1, r'$\sim 17$ Tage Periodizität in den ersten $\sim 130$ Tagen'),
-            (0, r'statistische Signifikanz über Monte-Carlo-Simulationen $>3.9\sigma$')
+            (0, ' ', r'Entsteht durch das Zerreißen eines Sterns durch das SL'),
+            (0, ' ', r'Rotationsachse der AK ist gekippt gegenüber der des SL'),
+            (0, ' ', r'Hochfrequentes Röntgen-Monitoring liefert Zeitreihe'),
+            (1, '[] ', r'$\sim 15$ Tage Periodizität in den ersten $\sim 130$ Tagen'),
+            (0, ' ', r'statistische Signifikanz über Monte-Carlo-Simulationen $>3.9\sigma$'),
+            (1, '[] ', r'$\Rightarrow$ Lense-Thirring Präzession ist Ursache')
+        ]
+        Texts = BulletedList(*texts)
+        Texts.next_to(self.slide_title, direction=DOWN, aligned_edge=LEFT)
+        Texts.fix_in_frame()
+        for text in Texts:
+            self.play(Write(text))
+            self.pause()
+        
+
+        self.setup_new_slide(title=r'Binärsystem aus Pulsar\\und weißem Zwerg',cleanup=True)
+        update_back_rects()
+        background_render = ImageMobject('./assets/lense_thirring.png',height=FRAME_HEIGHT).fix_in_frame()
+        self.play(FadeIn(background_render))
+        self.pause()
+        
+        
+        overview = ImageMobject('./assets/LT_binary_system_WD_P_overview.png',height=FRAME_HEIGHT*0.7).fix_in_frame().to_edge(RIGHT,buff=0)
+        ov_creds = TexText(r'Abgeändert nach: Krishnan et al., Science 367, 577-580 (2020)',font_size=0.5*CONTENT_FONT_SIZE).next_to(overview,direction=DOWN,buff=SMALL_BUFF)
+        self.play(FadeOut(background_render),FadeIn(overview),Write(ov_creds))
+        self.pause()
+
+        
+        texts = [
+            (0, ' ', r'Umlaufperiode: 4.74 h\\Exzentrizität: 0.17'),
+            (0, ' ', r'Pulsartiming über 18 Jahre'),
+            (0, ' ', r'Änderung der projizierten Halbachse\\$\dot{x}_{\mathrm{obs}} = (1.7 \pm 0.3)\cdot 10^{-13} ss^{-1}$'),
+            (0, ' ', r'zwei Hauptkomponenten\\$\dot{x}_{\mathrm{QPM}}$ ($\sim 20\,\%$), $\dot{x}_{\mathrm{LT}}$ ($\sim 60\,\%$)'),
+            (0, ' ', r'LT-Präzession des Orbits\\mit $\Omega_{\mathrm{LT}} \sim \frac{S_{\mathrm{WD}}}{a^3 (1-e^2)^{3/2}}$'),
+            (1, r'[$\Rightarrow$] ', r'passt zu Messung')
+        ]
+        Texts = BulletedList(*texts)
+        Texts.next_to(self.slide_title, direction=DOWN, aligned_edge=LEFT)
+        Texts.fix_in_frame()
+        for text in Texts:
+            self.play(Write(text))
+            self.pause()
+        
+
+        self.setup_new_slide(title='Zusammenfassung',cleanup=True)
+        update_back_rects()
+        texts = [
+            (0, ' ', 'Test1'),
+            (0, ' ', 'Test2'),
         ]
         Texts = BulletedList(*texts)
         Texts.next_to(self.slide_title, direction=DOWN, aligned_edge=LEFT)
@@ -1048,17 +1151,23 @@ class LenseThirringGL(Slide):
             self.pause()
 
 
-        self.setup_new_slide(title=r'Binärsystem aus Pulsar\\und weißem Zwerg',cleanup=True)
+        self.setup_new_slide(title='Quellen',cleanup=True)
+        update_back_rects()
+        texts = [
+            (0, ' ', r'N. Szpak Übung \& Skript zur Vorlesung zu Spezielle und Allgemeine Relativitätstheorie'),
+            (0, ' ', r'J. Lense, H. Thirring, \textit{Phys. Z.} \textbf{19}, 156 (1918)'),
+            (0, ' ', r'C. Misner, K. Thorne, \& J. Wheeler. - Gravitation (1973)'),
+            (0, ' ', r'C.W.F. Everitt, B.W. Parkinson Gravity Probe B Science Results—NASA Final Report. (2009)'),
+            (0, ' ', r'V. Venkatraman Krishnan \textit{et al.} Lense-Thirring frame dragging induced by a fast-rotating white dwarf in a binary pulsar system. \textit{Science} \textbf{367}, 577-580 (2020)'),
+            (0, ' ', r'D.R. Pasham, M. Zajaček, C.J. Nixon \textit{et al.} Lense-Thirring precession after a supermassive black hole disrupts a star. \textit{Nature} \textbf{630}, 325-328 (2024)')
+        ]
+        Texts = BulletedList(*texts)
+        Texts.next_to(self.slide_title, direction=DOWN, aligned_edge=LEFT)
+        Texts.fix_in_frame()
+        for text in Texts:
+            self.play(Write(text))
         self.pause()
-
         
-        #texts = []
-        #Texts = BulletedList(*texts)
-        #Texts.next_to(self.slide_title, direction=DOWN, aligned_edge=LEFT)
-        #Texts.fix_in_frame()
-        #for text in Texts:
-        #    self.play(Write(text))
-        #    self.pause()
 
 
     def get_non_canvas_mobjs(self):
@@ -1105,13 +1214,42 @@ class LenseThirringGL(Slide):
                 self.next_slide_title_animation(title),
             )
     
-    def make_video(self, videopath, update_period=1, no_video=False):
+    def get_highest_id(self):
+        directory = '/tmp'
+        prefix = 'hauptseminar_gl_'
+        suffix = '.png'
+        max_id = None
+
+        for filename in os.listdir(directory):
+            if not filename.startswith(prefix) or not filename.endswith(suffix):
+                continue
+
+            file_path = os.path.join(directory, filename)
+            if not os.path.isfile(file_path):
+                continue
+
+            id_str = filename[len(prefix):-len(suffix)]
+            try:
+                current_id = int(id_str)
+            except ValueError:
+                continue
+
+            if max_id is None or current_id > max_id:
+                max_id = current_id
+
+        return max_id
+    
+    def make_video(self, videopath, update_period=1, z_index=0, fix_in_frame=True, write_imgs=True):
+        max_ex = 0
+        if not write_imgs:
+            max_ex = self.get_highest_id()
         cap = cv2.VideoCapture(videopath)
         vid_fi = 1
         vid_us = 0
         vid_has, frame = cap.read()
-        cv2.imwrite(f"/tmp/hauptseminar_gl_{vid_fi}.png",frame)
-        frame_img = ImageMobject(f"/tmp/hauptseminar_gl_{vid_fi}.png")
+        if write_imgs:
+            cv2.imwrite(f"/tmp/hauptseminar_gl_{vid_fi}.png",frame)
+        frame_img = ImageMobject(f"/tmp/hauptseminar_gl_{vid_fi}.png",is_fixed_in_frame=fix_in_frame,z_index=z_index)
         frame_img.set_height(self.frame.get_height())
         def frame_updater(obj, dt):
             nonlocal vid_fi, vid_has, update_period, vid_us
@@ -1119,15 +1257,22 @@ class LenseThirringGL(Slide):
                 vid_us += 1
                 if vid_us >= update_period:
                     vid_us = 0
-                    frame_img = ImageMobject(f"/tmp/hauptseminar_gl_{vid_fi}.png")
+                    frame_img = ImageMobject(f"/tmp/hauptseminar_gl_{vid_fi}.png",is_fixed_in_frame=fix_in_frame,z_index=z_index)
                     frame_img.match_height(obj)
                     frame_img.match_width(obj)
                     frame_img.match_updaters(obj)
                     self.replace(obj, frame_img)
-                    vid_has, frame = cap.read()
-                    if vid_has:
-                        vid_fi += 1
-                        cv2.imwrite(f"/tmp/hauptseminar_gl_{vid_fi}.png",frame)
-        if not no_video:
-            frame_img.add_updater(frame_updater,call=False)
-        return frame_img, cap
+                    if write_imgs:
+                        vid_has, frame = cap.read()
+                        if vid_has:
+                            vid_fi += 1
+                            cv2.imwrite(f"/tmp/hauptseminar_gl_{vid_fi}.png",frame)
+                    else:
+                        vid_has = vid_fi+1 <= max_ex
+                        if vid_has:
+                            vid_fi += 1
+        return frame_img, cap, frame_updater
+
+class LenseThirringLightGL(LenseThirringGL):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)

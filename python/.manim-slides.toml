@@ -8,11 +8,17 @@ ids = [32]
 
 [keys.NEXT]
 name = 'NEXT'
-ids = [16777236]
+ids = [
+    16777236,
+    16777239,
+]
 
 [keys.PREVIOUS]
 name = 'PREVIOUS'
-ids = [16777234]
+ids = [
+    16777234,
+    16777238,
+]
 
 [keys.REVERSE]
 name = 'REVERSE'
