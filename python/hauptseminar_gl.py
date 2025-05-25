@@ -261,7 +261,7 @@ class LenseThirringGL(Slide):
             mob.phi = 0.0
             mob.add_updater(face_camera)
         #   cam rotater
-        camRot = mt.CircularCamRotater(self.frame, 2*np.pi/4,rv0 = np.array([0.0,-1.0,1.6]), rotvec = np.array([0.0,-1.0,1.3]))
+        camRot = mt.CircularCamRotater(self.frame, np.pi/4,rv0 = np.array([0.0,-1.0,1.6]), rotvec = np.array([0.0,-1.0,1.3]))
         self.pause(notes='Lense-Thirring-Effekt: Effekte der ART in erster Ordnung für eine rotierende Masse')
 
 
@@ -411,7 +411,7 @@ class LenseThirringGL(Slide):
         grid_img.shift(1.2*UP)
         self.pause()
 
-
+        
         # Metrik & Geodätengleichung (18-26)
         self.setup_new_slide(title='Metrik und Geodäten', cleanup=True)
         update_back_rects()
@@ -526,7 +526,7 @@ class LenseThirringGL(Slide):
         efe = TexText(r'${ R }_{\mu \nu} - \frac{1}{2} {g}_{\mu \nu} {R} = 8 \pi {T}_{\mu \nu}$',isolate=[r'{g}',r'\bm{g}',r'{ R }',r'{R}', r'{T}']).set_color_by_tex_to_color_map(symCols,only_isolated=True).fix_in_frame()
         approxs = TexText(r'Annahmen: ', r'${g}_{\mu \nu} = \eta_{\mu \nu} + {h}_{\mu \nu}$, $\bm{h} \ll \bm{\eta}$, $\tau \approx t$',isolate=[r'{g}',r'\bm{g}',r'{h}',r'\bm{h}']).set_color_by_tex_to_color_map(symCols,only_isolated=True).fix_in_frame()
         fields = TexText(r'Substitutionen: ',r'$\vec{ E }=\frac{1}{2}\vec{\nabla} {h}_{00}$, ${B}_j=-\varepsilon_{jlm}\frac{\partial {h}_{0m}}{\partial {x}^l}$',isolate=[r'\vec{ E }',r'{h}',r'{x}',r'{B}']).set_color_by_tex_to_color_map(symCols,only_isolated=True).fix_in_frame()
-        geod_gl_l1 = TexText(r'$\frac{d^2 {x}^{i}}{{dt}^2} = -\frac{1}{2}\frac{\partial {h}_{00}}{\partial {x}^i} + \varepsilon_{ijk}\varepsilon_{jlm}\frac{\partial {h}_{0m}}{\partial {x}^l}\frac{d {x}^k}{dt}$',isolate=[r'{x}',r'\bm{g}', r'{h}']).set_color_by_tex_to_color_map(symCols,only_isolated=True).fix_in_frame()
+        geod_gl_l1 = TexText(r'$\frac{d^2 {x}^{i}}{{dt}^2} = \frac{1}{2}\frac{\partial {h}_{00}}{\partial {x}^i} + \varepsilon_{ijk}\varepsilon_{jlm}\frac{\partial {h}_{0m}}{\partial {x}^l}\frac{d {x}^k}{dt}$',isolate=[r'{x}',r'\bm{g}', r'{h}']).set_color_by_tex_to_color_map(symCols,only_isolated=True).fix_in_frame()
         geod_gl_l2 = TexText(r'$\vec{ F } = {m} \left( \vec{ E } + \vec{ v }\times\vec{ B } \right)$',isolate=[r'\vec{ F }', r'{m}',r'\vec{ E }', r'\vec{ v }', r'\vec{ B }']).set_color_by_tex_to_color_map(symCols,only_isolated=True).fix_in_frame()
         efe_l1 = TexText(r'$-\Delta {h}_{00} = 8\pi\rho$, $-\Delta {h}_{0i} = 16\pi j_i$',isolate=[r'{h}']).set_color_by_tex_to_color_map(symCols,only_isolated=True).fix_in_frame()
         efe_l2 = TexText(r'$\vec{\nabla}\cdot\vec{ E } = - 4 \pi \rho$',isolate=[r'\vec{ E }', r'\vec{ B }']).set_color_by_tex_to_color_map(symCols,only_isolated=True).fix_in_frame()
@@ -644,7 +644,7 @@ class LenseThirringGL(Slide):
         #   E-Feld Animation
         sls_e.startUpdating(timeScaleF=0.25)
         camRot.startUpdating()
-        self.wait(4.0)
+        self.wait(8.0)
         self.pause(auto_next=True,notes='B-Feld ähnlich dem eines Kreisstroms')
 
 
@@ -663,7 +663,7 @@ class LenseThirringGL(Slide):
         #   B-Feld Animation
         sls_b.startUpdating(timeScaleF=0.25)
         camRot.startUpdating()
-        self.wait(4.0)
+        self.wait(8.0)
         self.pause()
 
 
@@ -865,7 +865,7 @@ class LenseThirringGL(Slide):
 
         sphere_omega = sphere_omega0
         precession = np.pi/2
-        spin = 5
+        spin = 3.7
         lanim_1.startUpdating(timeScaleF=2.0)
         lanim_2.startUpdating(timeScaleF=2.0)
         self.wait(4.0)
@@ -1065,11 +1065,16 @@ class LenseThirringGL(Slide):
         Texts = BulletedList(*texts)
         Texts.next_to(subtitle, direction=DOWN, aligned_edge=LEFT)
         Texts.fix_in_frame()
+        for text in Texts[:5]:
+            self.play(Write(text))
+            self.pause()
+        
+
         self.play(FadeIn(overview),Write(img_creds))
         self.pause()
 
 
-        for text in Texts:
+        for text in Texts[5:]:
             self.play(Write(text))
             self.pause()
         
@@ -1131,22 +1136,28 @@ class LenseThirringGL(Slide):
         
         overview = ImageMobject('./assets/LT_binary_system_WD_P_overview.png',height=FRAME_HEIGHT*0.7).fix_in_frame().to_edge(RIGHT,buff=0)
         ov_creds = TexText(r'Abgeändert nach: Krishnan et al., Science 367, 577-580 (2020)',font_size=0.5*CONTENT_FONT_SIZE).next_to(overview,direction=DOWN,buff=SMALL_BUFF)
-        self.play(FadeOut(background_render),FadeIn(overview),Write(ov_creds))
-        self.pause()
-
-        
         texts = [
             (0, ' ', r'Umlaufperiode: 4.74 h\\Exzentrizität: 0.17'),
             (0, ' ', r'Pulsartiming über 18 Jahre'),
             (0, ' ', r'Änderung der projizierten Halbachse\\$\dot{x}_{\mathrm{obs}} = (1.7 \pm 0.3)\cdot 10^{-13} ss^{-1}$'),
-            (0, ' ', r'zwei Hauptkomponenten\\$\dot{x}_{\mathrm{QPM}}$ ($\sim 20\,\%$), $\dot{x}_{\mathrm{LT}}$ ($\sim 60\,\%$)'),
+            (0, ' ', r'zwei Hauptkomponenten\\$\dot{x}_{\mathrm{QPM}}$ ($\sim 60\,\%$), $\dot{x}_{\mathrm{LT}}$ ($\sim 20\,\%$)'),
             (0, ' ', r'LT-Präzession des Orbits\\mit $\Omega_{\mathrm{LT}} \sim \frac{S_{\mathrm{WD}}}{a^3 (1-e^2)^{3/2}}$'),
             (1, r'[$\Rightarrow$] ', r'passt zu Messung')
         ]
         Texts = BulletedList(*texts)
         Texts.next_to(subtitle, direction=DOWN, aligned_edge=LEFT)
         Texts.fix_in_frame()
-        for text in Texts:
+        self.play(FadeOut(background_render))
+        for text in Texts[:3]:
+            self.play(Write(text))
+            self.pause()
+
+
+        self.play(FadeIn(overview),Write(ov_creds))
+        self.pause()
+
+        
+        for text in Texts[3:]:
             self.play(Write(text))
             self.pause()
         
