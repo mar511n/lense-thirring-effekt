@@ -32,8 +32,9 @@ Strukturierung:
 
     
 TODO:
-notes überprüfen
 Rechnungen Akkretionsscheibe machen
+energie EB-Felder ausrechnen
+Animation Bahndrehimpuls
 Trajektorien Gas wie Schwarzes Loch simulieren
 oder alternative alte gas sim nehmen
 
@@ -94,7 +95,7 @@ DARK_MODE: bool = True
 LIGHT_MODE: bool = False # experimental
 OFFBLACK = rgb_to_color(hex_to_rgb("#121317"))
 OFFWHITE = rgb_to_color(hex_to_rgb("#F0F8FF"))
-Theme = DARK_MODE
+Theme = LIGHT_MODE
 BACKCOL = OFFBLACK if Theme else OFFWHITE
 FRONTCOL = OFFWHITE if Theme else OFFBLACK
 
@@ -308,7 +309,11 @@ class LenseThirringGL(Slide):
         self.slide_number = Integer(1, font_size=CONTENT_FONT_SIZE*0.6, z_index=self.z_idx_fix).to_corner(DR,buff=MED_SMALL_BUFF)
         self.slide_number.fix_in_frame()
         self.canvas_objs.append(self.slide_number)
-        self.play(FadeOut(presentation_info),FadeOut(TextBox),FadeOut(background_render), Write(contact_info), Write(presentation_title), Write(self.slide_number), self.slide_title.animate.to_corner(UL))
+        self.play(FadeOut(presentation_info),FadeOut(TextBox), background_render.animate.center(),self.slide_title.animate.to_corner(UL))
+        self.pause()
+
+
+        self.play(FadeOut(background_render),Write(contact_info), Write(presentation_title), Write(self.slide_number))
         self.pause()
 
 
@@ -410,7 +415,7 @@ class LenseThirringGL(Slide):
         apple.shift(1.2*UP)
         grid_img.shift(1.2*UP)
         self.pause()
-
+        
         
         # Metrik & Geodätengleichung (18-26)
         self.setup_new_slide(title='Metrik und Geodäten', cleanup=True)
@@ -438,7 +443,7 @@ class LenseThirringGL(Slide):
         ts,zs = ltt.get_geodesic(6, np.array([3,0.5,-1,0]),tol=1e-9,accF=ltt.acc_gaußian_surface,check_break=lambda t,r: np.abs(r[0])>3 or np.abs(r[1])>3)
         pcd_nc = mt.CurveDrawer([ltt.ParametricCurve(ts,[[uv[0],uv[1],0] for uv in zs[:,:2]])],fixed_color=ORANGE)
         pcd_nc.update_graphics()
-        dot = Sphere(radius=0.05,color=symCols[r'\vec{ x }'],shading=(0,0,0)).apply_depth_test()
+        dot = Sphere(radius=0.1,color=symCols[r'\vec{ x }'],shading=(0,0,0)).apply_depth_test()
         u_label = TexText(r'${u}$', fix_in_frame=False).next_to(grid_nc.get_bottom(),DOWN).set_color_by_tex_to_color_map(symCols)
         v_label = TexText(r'${v}$', fix_in_frame=False).next_to(grid_nc.get_left(),LEFT).set_color_by_tex_to_color_map(symCols)
         self.play(Write(grid_nc), Write(pcd_nc), Write(u_label), Write(v_label))
@@ -464,7 +469,7 @@ class LenseThirringGL(Slide):
         #camRot.stopUpdating()
         self.remove(dot)
         self.pause(auto_next=True)
-
+        
 
         #   Gekrümmter Raum (24-26)
         ltt.set_params_gaußian_surface(1/np.sqrt(2),A=2.0)
@@ -494,7 +499,7 @@ class LenseThirringGL(Slide):
         #camRot.stopUpdating()
         self.pause()
 
-
+        
         # EFGl mit Analogie 2D Fläche eingebettet in 3D Raum -> 4D Fläche (27-33)
         self.setup_new_slide(title='Einsteinsche Feldgleichungen',cleanup=True)
         update_back_rects()
@@ -564,7 +569,7 @@ class LenseThirringGL(Slide):
         self.play(Write(geod_gl_l2))
         self.pause()
 
-
+        
         # Rotierende Kugelmasse (41-46)
         self.setup_new_slide(title='Rotierende Kugelmasse', cleanup=True)
         update_back_rects()
@@ -665,8 +670,8 @@ class LenseThirringGL(Slide):
         camRot.startUpdating()
         self.wait(8.0)
         self.pause()
-
-
+        
+        
         # Trajektorien (53-64)
         self.remove(sls_e)
         self.remove(sls_b)
@@ -694,8 +699,8 @@ class LenseThirringGL(Slide):
             ([0,0,2],[-np.sqrt(0.5),0,0],[0.0,0.712],[18,93.5]),
         ]
         trajs = [
-            mt.CurveDrawer([ltt.get_trajectory(M=ltt.M,R=ltt.R,omega=x0_v0_omega[0][2][0],x0=x0_v0_omega[0][0],v0=x0_v0_omega[0][1],tmax=x0_v0_omega[0][3][0],cputmax=2,tol=traj_tol)],randomize_t0s=False),
-            mt.CurveDrawer([ltt.get_trajectory(M=ltt.M,R=ltt.R,omega=x0_v0_omega[1][2][0],x0=x0_v0_omega[1][0],v0=x0_v0_omega[1][1],tmax=x0_v0_omega[1][3][0],cputmax=2,tol=traj_tol)],randomize_t0s=False),
+            mt.CurveDrawer([ltt.get_trajectory(M=ltt.M,R=ltt.R,omega=x0_v0_omega[0][2][0],x0=x0_v0_omega[0][0],v0=x0_v0_omega[0][1],tmax=x0_v0_omega[0][3][0],cputmax=2,tol=traj_tol)],randomize_t0s=False,fixed_color=ORANGE),
+            mt.CurveDrawer([ltt.get_trajectory(M=ltt.M,R=ltt.R,omega=x0_v0_omega[1][2][0],x0=x0_v0_omega[1][0],v0=x0_v0_omega[1][1],tmax=x0_v0_omega[1][3][0],cputmax=2,tol=traj_tol)],randomize_t0s=False,fixed_color=ORANGE),
         ]
         current_traj = 0
         omega_tracker = ValueTracker(0.0)
@@ -753,7 +758,7 @@ class LenseThirringGL(Slide):
         self.wait(2*np.pi/sphere_omega)
         omega_tracker.remove_updater(traj_updater)
         self.pause(notes='Raumzeit: für jeden Punkt auf dem Gitter wird die zeitliche Entwicklung dargestellt')
-
+        
         
         #   Raumzeitdarstellung (65-70)
         sphere_omega = 0.0
@@ -771,9 +776,11 @@ class LenseThirringGL(Slide):
         #sphere.apply_depth_test()
         self.play(Write(text_erkl0), Write(text_erkl1), Write(text_erkl2))
 
-        lines_0 = np.load('./assets/spacetime_sims/lt2d_lines__line_nums=22__subdivisions=100__timesteps=180__tau_max=9.0__R=1.0__M=1.0__omega=0.0.npy')
+        #lines_0 = np.load('./assets/spacetime_sims/lt2d_lines__line_nums=22__subdivisions=100__timesteps=180__tau_max=9.0__R=1.0__M=1.0__omega=0.0.npy')
+        lines_0 = np.load('./assets/spacetime_sims/lt2d_polar_lines__line_nums=25__subdivisions=100__timesteps=180__tau_max=9.0__R=1.0__M=1.0__omega=0.npy')
         print(f'loaded lines with shape {lines_0.shape}')
-        lines_1 = np.load('./assets/spacetime_sims/lt2d_lines__line_nums=22__subdivisions=100__timesteps=180__tau_max=9.0__R=1.0__M=1.0__omega=1.0.npy')
+        #lines_1 = np.load('./assets/spacetime_sims/lt2d_lines__line_nums=22__subdivisions=100__timesteps=180__tau_max=9.0__R=1.0__M=1.0__omega=1.0.npy')
+        lines_1 = np.load('./assets/spacetime_sims/lt2d_polar_lines__line_nums=25__subdivisions=100__timesteps=180__tau_max=9.0__R=1.0__M=1.0__omega=1.0.npy')
         print(f'loaded lines with shape {lines_1.shape}')
         lanim_0 = mt.LineAnim(np.linspace(0,9.0,lines_0.shape[1]),lines_0,z_index=0,basecolor=FRONTCOL)
         lanim_1 = mt.LineAnim(np.linspace(0,9.0,lines_1.shape[1]),lines_1,z_index=0,basecolor=FRONTCOL)
@@ -815,7 +822,7 @@ class LenseThirringGL(Slide):
         self.wait(4.0)
         lanim_1.stopUpdating()
         self.pause(auto_next=True)
-
+        
 
         #  Präzession Intuition (71-78)
         lanim_1.startUpdating(timeScaleF=2.0)
@@ -850,7 +857,8 @@ class LenseThirringGL(Slide):
         precession_circle = Circle(radius=0.191, color=YELLOW_E, fill_opacity=0.4, stroke_width=DEFAULT_STROKE_WIDTH).rotate(np.pi,axis=UP)
         precession_circle.move_to((2.0,0,0.462))
 
-        lines_2 = np.load('./assets/spacetime_sims/lt2d_lines__line_nums=20__subdivisions=100__timesteps=180__tau_max=9.0__R=1.0__M=1.0__omega=1.0.npy')
+        #lines_2 = np.load('./assets/spacetime_sims/lt2d_lines__line_nums=20__subdivisions=100__timesteps=180__tau_max=9.0__R=1.0__M=1.0__omega=1.0.npy')
+        lines_2 = np.load('./assets/spacetime_sims/lt2d_polar_detail_lines__line_nums=13__subdivisions=100__timesteps=180__tau_max=9.0__R=1.0__M=1.0__omega=1.0.npy')
         print(f'loaded lines with shape {lines_2.shape}')
         lanim_2 = mt.LineAnim(np.linspace(0,9.0,lines_2.shape[1]),lines_2,z_index=-1,basecolor=FRONTCOL)
         lanim_2.updateVMobjs(0,force=True)
@@ -872,7 +880,7 @@ class LenseThirringGL(Slide):
         lanim_1.stopUpdating()
         lanim_2.stopUpdating()
         self.pause(auto_next=True)
-
+        
 
         lanim_1.startUpdating(timeScaleF=2.0)
         lanim_2.startUpdating(timeScaleF=2.0)
