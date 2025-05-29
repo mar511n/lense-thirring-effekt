@@ -32,11 +32,11 @@ Strukturierung:
 
     
 TODO:
-Rechnungen Akkretionsscheibe machen
 energie EB-Felder ausrechnen
 Animation Bahndrehimpuls
 Trajektorien Gas wie Schwarzes Loch simulieren
-oder alternative alte gas sim nehmen
+    oder alternative alte gas sim nehmen
+Zusammenfassung nicht nur Text
 
 self.pause überprüfen
 rate functions (linear) überprüfen
@@ -1052,7 +1052,7 @@ class LenseThirringGL(Slide):
 
         self.setup_new_slide(title='Gravity Probe B', cleanup=True)
         update_back_rects()
-        subtitle = TexText(r'C.W.F. Everitt, B.W. Parkinson', font_size=0.5*CONTENT_FONT_SIZE)
+        subtitle = TexText(r'C.W.F. Everitt, B.W. Parkinson Gravity Probe B Science Results—NASA Final Report. (2009)', font_size=0.5*CONTENT_FONT_SIZE)
         subtitle.next_to(self.slide_title,direction=DOWN,buff=SMALL_BUFF,aligned_edge=LEFT)
         self.play(Write(subtitle))
         self.pause()
@@ -1089,7 +1089,7 @@ class LenseThirringGL(Slide):
         
         self.setup_new_slide(title=r'Akkretionsscheibe (AS) eines\\supermassiven Schwarzen Lochs (SL)',cleanup=True)
         update_back_rects()
-        subtitle = TexText(r'D.R. Pasham, M. Zajaček, C.J. Nixon \textit{et al.}', font_size=0.5*CONTENT_FONT_SIZE)
+        subtitle = TexText(r'D.R. Pasham, M. Zajaček, C.J. Nixon \textit{et al.} \textit{Nature} \textbf{630}, 325-328 (2024)', font_size=0.5*CONTENT_FONT_SIZE)
         self.canvas_objs.append(subtitle)
         subtitle.next_to(self.slide_title,direction=DOWN,buff=SMALL_BUFF,aligned_edge=LEFT)
         self.play(Write(subtitle))
@@ -1134,7 +1134,7 @@ class LenseThirringGL(Slide):
         
         self.setup_new_slide(title=r'Binärsystem aus Pulsar\\und weißem Zwerg',cleanup=True)
         update_back_rects()
-        subtitle = TexText(r'V. Venkatraman Krishnan \textit{et al.}', font_size=0.5*CONTENT_FONT_SIZE)
+        subtitle = TexText(r'V. Venkatraman Krishnan \textit{et al.} \textit{Science} \textbf{367}, 577-580 (2020)', font_size=0.5*CONTENT_FONT_SIZE)
         subtitle.next_to(self.slide_title,direction=DOWN,buff=SMALL_BUFF,aligned_edge=LEFT)
         self.play(Write(subtitle))
         background_render = ImageMobject('./assets/lense_thirring.png',height=FRAME_HEIGHT).fix_in_frame()
@@ -1143,7 +1143,7 @@ class LenseThirringGL(Slide):
         
         
         overview = ImageMobject('./assets/LT_binary_system_WD_P_overview.png',height=FRAME_HEIGHT*0.7).fix_in_frame().to_edge(RIGHT,buff=0)
-        ov_creds = TexText(r'Abgeändert nach: Krishnan et al., Science 367, 577-580 (2020)',font_size=0.5*CONTENT_FONT_SIZE).next_to(overview,direction=DOWN,buff=SMALL_BUFF)
+        ov_creds = TexText(r'Abgeändert nach: Krishnan \textit{et al.} \textit{Science} \textbf{367}, 577-580 (2020)',font_size=0.5*CONTENT_FONT_SIZE).next_to(overview,direction=DOWN,buff=SMALL_BUFF)
         texts = [
             (0, ' ', r'Umlaufperiode: 4.74 h\\Exzentrizität: 0.17'),
             (0, ' ', r'Pulsartiming über 18 Jahre'),
