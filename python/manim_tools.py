@@ -13,12 +13,12 @@ class Arrow3D(Surface):
                 start = np.array([0,0,0]),
                 end = np.array([0,0,1]),
                 color = GREY,
-                shading = (0.3, 0.2, 0.4),
+                shading = (0, 0, 0),
                 depth_test = True,
                 tip_width_ratio = 0.3,
                 tip_length = 0.1,
                 shaft_width = 0.015,
-                resolution = (41, 101),
+                resolution = (8, 5),
                 prefered_creation_axis = 1,
                 epsilon = 1e-4,
                 **kwargs):
@@ -28,6 +28,9 @@ class Arrow3D(Surface):
         self.tip_width_ratio = tip_width_ratio
         self.tip_length = tip_length
         self.shaft_width = shaft_width
+        dv = 1/(resolution[1]-1)
+        eps = 1e-6
+        self.regs = [dv+eps,2*dv+eps,3*dv+eps]
         super().__init__(color, shading, depth_test, (0,TAU), (0,1.0), resolution, prefered_creation_axis, epsilon, **kwargs)
         self.move_to((self.start+self.end)/2)
         # rotate the arrow to point from start to end (currently it points along the z-axis)
@@ -36,17 +39,24 @@ class Arrow3D(Surface):
         self.rotate(np.arctan2(target[1], target[0])+np.pi/2, axis=(0,0,1))
 
     def uv_func(self, u: float, v: float) -> np.ndarray:
-        if v < 0.25:
-            r = v*4*self.shaft_width
+        if v < self.regs[0]:
+            v /= self.regs[0]
+            r = v*self.shaft_width
             return np.array([r*np.cos(u), r*np.sin(u), 0])
-        elif v < 0.5:
+        elif v < self.regs[1]:
+            v -= self.regs[0]
+            v /= self.regs[1]-self.regs[0]
             r = self.shaft_width
-            return np.array([r*np.cos(u), r*np.sin(u), (v-0.25)*4*(self.length-self.tip_length)])
-        elif v < 0.75:
-            r = self.shaft_width+(v-0.5)*4*self.tip_width_ratio*self.tip_length
+            return np.array([r*np.cos(u), r*np.sin(u), v*(self.length-self.tip_length)])
+        elif v < self.regs[2]:
+            v -= self.regs[1]
+            v /= self.regs[2]-self.regs[1]
+            r = self.shaft_width+v*self.tip_width_ratio*self.tip_length
             return np.array([r*np.cos(u), r*np.sin(u), self.length-self.tip_length])
-        r = (self.shaft_width+self.tip_width_ratio*self.tip_length)*(1.0-v)*4
-        return np.array([r*np.cos(u), r*np.sin(u), self.length-self.tip_length*4*(1.0-v)])
+        v -= self.regs[2]
+        v /= 1.0-self.regs[2]
+        r = (self.shaft_width+self.tip_width_ratio*self.tip_length)*(1.0-v)
+        return np.array([r*np.cos(u), r*np.sin(u), self.length-self.tip_length*(1.0-v)])
         
 
 class LineAnim(VGroup):

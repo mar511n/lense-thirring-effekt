@@ -6,6 +6,7 @@ import numpy as np
 #import scipy.interpolate as spinter
 import manim_tools as mt
 import lense_thirring_tools as ltt
+import manim_scenes as ms
 import os
 import cv2
 #import re
@@ -33,7 +34,6 @@ Strukturierung:
     
 TODO:
 energie EB-Felder ausrechnen
-Animation Bahndrehimpuls
 Trajektorien Gas wie Schwarzes Loch simulieren
     oder alternative alte gas sim nehmen
 Zusammenfassung nicht nur Text
@@ -95,9 +95,10 @@ DARK_MODE: bool = True
 LIGHT_MODE: bool = False # experimental
 OFFBLACK = rgb_to_color(hex_to_rgb("#121317"))
 OFFWHITE = rgb_to_color(hex_to_rgb("#F0F8FF"))
-Theme = LIGHT_MODE
+Theme = DARK_MODE
 BACKCOL = OFFBLACK if Theme else OFFWHITE
 FRONTCOL = OFFWHITE if Theme else OFFBLACK
+ms.set_theme(Theme)
 
 TITLE_FONT_SIZE = 52
 CONTENT_FONT_SIZE = 0.75 * TITLE_FONT_SIZE
@@ -249,19 +250,12 @@ class LenseThirringGL(Slide):
                         mobj.next_to(last.get_corner(DOWN),DOWN,aligned_edge=ORIGIN)
         #   call let_obj_face_cam on a mobj to make it face the camera
         def face_camera(mob:Mobject, dt):
-            newtheta = self.frame.get_theta()
-            newphi = self.frame.get_phi()
-            mob.rotate(-mob.theta, axis=OUT)
-            mob.rotate(-mob.phi, axis=RIGHT)
-            mob.rotate(newphi, axis=RIGHT)
-            mob.rotate(newtheta, axis=OUT)
-            mob.theta = newtheta
-            mob.phi = newphi
+            mob.become(mob.saved_state)
+            mob.rotate(self.frame.get_phi(), axis=RIGHT)
+            mob.rotate(self.frame.get_theta(), axis=OUT)
         def let_obj_face_cam(mob:Mobject):
-            mob.theta = 0.0
-            mob.phi = 0.0
-            mob.add_updater(face_camera)
-        #   cam rotater
+            mob.save_state()
+            mob.add_updater(face_camera,call=True)
         camRot = mt.CircularCamRotater(self.frame, np.pi/4,rv0 = np.array([0.0,-1.0,1.6]), rotvec = np.array([0.0,-1.0,1.3]))
         self.pause(notes='Lense-Thirring-Effekt: Effekte der ART in erster Ordnung für eine rotierende Masse')
 
@@ -1142,8 +1136,12 @@ class LenseThirringGL(Slide):
         self.pause(notes='Drehimpuls von WD ist ca. 100 mal so groß wie der des NS. Beobachtet wird die projizierten Halbachse des Orbits. Der Orbit des NS hat Drehimpuls und präzediert deswegen aufgrund des LT-Effekts. Die projizierte Halbachse wird über Jahre durch Pulsar timing gemessen (Time of Arrival (TOA) variiert mit Abstand zur Erde)')
         
         
-        overview = ImageMobject('./assets/LT_binary_system_WD_P_overview.png',height=FRAME_HEIGHT*0.7).fix_in_frame().to_edge(RIGHT,buff=0)
-        ov_creds = TexText(r'Abgeändert nach: Krishnan \textit{et al.} \textit{Science} \textbf{367}, 577-580 (2020)',font_size=0.5*CONTENT_FONT_SIZE).next_to(overview,direction=DOWN,buff=SMALL_BUFF)
+        #overview = ImageMobject('./assets/LT_binary_system_WD_P_overview.png',height=FRAME_HEIGHT*0.7).fix_in_frame().to_edge(RIGHT,buff=0)
+        #ov_creds = TexText(r'Abgeändert nach: Krishnan \textit{et al.} \textit{Science} \textbf{367}, 577-580 (2020)',font_size=0.5*CONTENT_FONT_SIZE).next_to(overview,direction=DOWN,buff=SMALL_BUFF)
+        self.frame.reorient(50,48,0)
+        self.offset_3d.set_value(3+0j)
+        screen_space_shift(self.offset_3d,0)
+        (mobjs,vmobjs,fvmobjs), updater = ms.make_orbit(face_camera)
         texts = [
             (0, ' ', r'Umlaufperiode: 4.74 h\\Exzentrizität: 0.17'),
             (0, ' ', r'Pulsartiming über 18 Jahre'),
@@ -1160,11 +1158,19 @@ class LenseThirringGL(Slide):
             self.play(Write(text))
             self.pause()
 
+        
+        self.play(*[FadeIn(mob) for mob in mobjs],*[Write(vmob) for vmob in vmobjs], *[Write(vmob) for vmob in fvmobjs])
+        mobjs[0].add_updater(updater)
+        for fvmob in fvmobjs: fvmob.add_updater(face_camera)
+        self.pause(loop=True)
 
-        self.play(FadeIn(overview),Write(ov_creds))
+        
+        self.wait(16.0)
         self.pause()
 
         
+        for fvmob in fvmobjs: fvmob.clear_updaters()
+        mobjs[0].clear_updaters()
         for text in Texts[3:]:
             self.play(Write(text))
             self.pause()
@@ -1184,7 +1190,7 @@ class LenseThirringGL(Slide):
             self.play(Write(text))
             self.pause()
 
-
+        
         self.setup_new_slide(title='Quellen',cleanup=True)
         update_back_rects()
         texts = [
