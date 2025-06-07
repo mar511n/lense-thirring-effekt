@@ -34,9 +34,7 @@ Strukturierung:
     
 TODO:
 energie EB-Felder ausrechnen
-Trajektorien Gas wie Schwarzes Loch simulieren
-    oder alternative alte gas sim nehmen
-Zusammenfassung nicht nur Text
+Zusammenfassung mit Bildern von vorher
 
 self.pause überprüfen
 rate functions (linear) überprüfen
@@ -95,7 +93,7 @@ DARK_MODE: bool = True
 LIGHT_MODE: bool = False # experimental
 OFFBLACK = rgb_to_color(hex_to_rgb("#121317"))
 OFFWHITE = rgb_to_color(hex_to_rgb("#F0F8FF"))
-Theme = DARK_MODE
+Theme = LIGHT_MODE
 BACKCOL = OFFBLACK if Theme else OFFWHITE
 FRONTCOL = OFFWHITE if Theme else OFFBLACK
 ms.set_theme(Theme)
@@ -178,16 +176,17 @@ class LenseThirringGL(Slide):
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         self.high_quality = False
         kwargs['show_animation_progress'] = True
-        #kwargs['leave_progress_bars'] = True
         kwargs['camera_config'] = {'background_color':BACKCOL}
         kwargs['camera_config']['light_source_position'] = np.array([10, -10, 10])
         #kwargs['start_at_animation_number'] = 7
         #kwargs['end_at_animation_number'] = 20
-        print(kwargs)
+        
         super().__init__(*args, **kwargs)
         if self.high_quality:
             self.samples = 16
         self.max_duration_before_split_reverse = 100
+        self.skip_reversing = True
+        print(kwargs)
     def construct(self):
         # basic setup
         #   canvas objects (are not wiped)
@@ -213,30 +212,42 @@ class LenseThirringGL(Slide):
             self.camera.uniforms['shift_screen_space'] = np.array([val.real,val.imag],dtype=float)
         self.offset_3d.add_updater(screen_space_shift)
         #   predefined colors for certain tex parts
+        # Metrik/Felder     -> Yellow & Gold
+        # Orte              -> Red & Maroon
+        # Geschw.           -> Blue
+        # Kraft             -> Green
+        # Drehimpuls        -> Purple
+        # Drehmomoment      -> Brown
+        # Präzession        -> Pink
+
         symCols = {
-            r'\vec{ x }':BLUE_D,
-            r'{x}':BLUE_D,
-            r'{g}':YELLOW_D,
-            r'\bm{g}':YELLOW_D,
-            r'{h}':YELLOW_B,
-            r'{u}':GREEN_C,
-            r'{v}':LIGHT_BROWN,
-            r'\Gamma':PURPLE_C,
-            r'{ R }':GREEN_C,
-            r'{R}':LIGHT_BROWN,
-            r'{T}':RED,
-            r'\vec{ F }':GOLD_C,
-            r'\vec{ F }_E':GOLD_C,
-            r'\vec{ F }_B':GOLD_C,
-            r'\vec{ E }':YELLOW_B,
-            r'\vec{ B }':YELLOW_B,
-            r'{B}':YELLOW_B,
-            r'\vec{ v }':BLUE_B,
-            r'{m}':WHITE,
-            r'\vec{ L }':BLUE_D,
-            r'\vec{ r }':GREEN_C,
-            r'\vec{ \Omega }':ORANGE,
-            r'\vec{ M }': LIGHT_BROWN
+            r'{g}':             YELLOW_C    if Theme else YELLOW_E,
+            r'\bm{g}':          YELLOW_C    if Theme else YELLOW_E,
+            r'{h}':             YELLOW_E    if Theme else YELLOW_D,
+            r'\vec{ E }':       GOLD_D      if Theme else GOLD_E,
+            r'\vec{ B }':       GOLD_C      if Theme else GOLD_E,
+            r'{B}':             GOLD_C      if Theme else GOLD_E,
+
+            r'\vec{ x }':       RED_C       if Theme else RED_E,
+            r'{x}':             RED_C       if Theme else RED_E,
+            r'\vec{ r }':       RED_C       if Theme else RED_E,
+            r'{r}':             RED_C       if Theme else RED_E,
+
+            r'\vec{ v }':       BLUE_C      if Theme else BLUE_E,
+
+            r'\vec{ F }':       GREEN_C     if Theme else GREEN_E,
+            r'\vec{ F }_E':     GREEN_C     if Theme else GREEN_E,
+            r'\vec{ F }_B':     GREEN_C     if Theme else GREEN_E,
+
+            r'\vec{ L }':       PURPLE_C    if Theme else PURPLE_E,
+
+            r'\vec{ M }':       LIGHT_BROWN if Theme else DARK_BROWN,
+
+            r'\vec{ \Omega }':  LIGHT_PINK  if Theme else PINK,
+        }
+        objCols = {
+            'traj':             ORANGE,
+            'probe':            PURPLE_D,
         }
         #   function to align Mobjs on the left below the title
         def align_mobjs(mobjs,tomobj,center=False):
@@ -435,7 +446,7 @@ class LenseThirringGL(Slide):
         ltt.set_params_gaußian_surface(1/np.sqrt(2),A=0.0)
         grid_nc,_ = mt.get_grid_surface(uv_func=lambda u,v: [u,v,v*0], u_range=(-3,3), v_range=(-3,3), grid_size=(8,8), grid_col=FRONTCOL)
         ts,zs = ltt.get_geodesic(6, np.array([3,0.5,-1,0]),tol=1e-9,accF=ltt.acc_gaußian_surface,check_break=lambda t,r: np.abs(r[0])>3 or np.abs(r[1])>3)
-        pcd_nc = mt.CurveDrawer([ltt.ParametricCurve(ts,[[uv[0],uv[1],0] for uv in zs[:,:2]])],fixed_color=ORANGE)
+        pcd_nc = mt.CurveDrawer([ltt.ParametricCurve(ts,[[uv[0],uv[1],0] for uv in zs[:,:2]])],fixed_color=objCols['traj'])
         pcd_nc.update_graphics()
         dot = Sphere(radius=0.1,color=symCols[r'\vec{ x }'],shading=(0,0,0)).apply_depth_test()
         u_label = TexText(r'${u}$', fix_in_frame=False).next_to(grid_nc.get_bottom(),DOWN).set_color_by_tex_to_color_map(symCols)
@@ -470,7 +481,7 @@ class LenseThirringGL(Slide):
         _, surface = mt.get_grid_surface(uv_func=lambda u,v: [u,v,ltt.z_gaußian_surface(u,v)], u_range=(-3,3), v_range=(-3,3), grid_size=(8,8), grid_col=FRONTCOL)
         surface.set_color_by_rgba_func(lambda r: get_color_map('viridis')(r[2]/ltt.z_gaußian_surface(0,0)))
         ts,zs = ltt.get_geodesic(10, np.array([3,0.5,-1,0]),tol=1e-9,accF=ltt.acc_gaußian_surface,check_break=lambda t,r: np.abs(r[0])>3 or np.abs(r[1])>3)
-        pcd = mt.CurveDrawer([ltt.ParametricCurve(ts,[[uv[0],uv[1],ltt.z_gaußian_surface(uv[0],uv[1])+1e-2] for uv in zs[:,:2]])],fixed_color=ORANGE)
+        pcd = mt.CurveDrawer([ltt.ParametricCurve(ts,[[uv[0],uv[1],ltt.z_gaußian_surface(uv[0],uv[1])+1e-2] for uv in zs[:,:2]])],fixed_color=objCols['traj'])
         pcd.update_graphics()
         metric = DecimalMatrix(((1,0),(0,1)),num_decimal_places=2).scale(0.7).fix_in_frame()
         metric.next_to(g_euclid[1].get_corner(UL),RIGHT,aligned_edge=UP,buff=0)
@@ -693,8 +704,8 @@ class LenseThirringGL(Slide):
             ([0,0,2],[-np.sqrt(0.5),0,0],[0.0,0.712],[18,93.5]),
         ]
         trajs = [
-            mt.CurveDrawer([ltt.get_trajectory(M=ltt.M,R=ltt.R,omega=x0_v0_omega[0][2][0],x0=x0_v0_omega[0][0],v0=x0_v0_omega[0][1],tmax=x0_v0_omega[0][3][0],cputmax=2,tol=traj_tol)],randomize_t0s=False,fixed_color=ORANGE),
-            mt.CurveDrawer([ltt.get_trajectory(M=ltt.M,R=ltt.R,omega=x0_v0_omega[1][2][0],x0=x0_v0_omega[1][0],v0=x0_v0_omega[1][1],tmax=x0_v0_omega[1][3][0],cputmax=2,tol=traj_tol)],randomize_t0s=False,fixed_color=ORANGE),
+            mt.CurveDrawer([ltt.get_trajectory(M=ltt.M,R=ltt.R,omega=x0_v0_omega[0][2][0],x0=x0_v0_omega[0][0],v0=x0_v0_omega[0][1],tmax=x0_v0_omega[0][3][0],cputmax=2,tol=traj_tol)],randomize_t0s=False,fixed_color=objCols['traj']),
+            mt.CurveDrawer([ltt.get_trajectory(M=ltt.M,R=ltt.R,omega=x0_v0_omega[1][2][0],x0=x0_v0_omega[1][0],v0=x0_v0_omega[1][1],tmax=x0_v0_omega[1][3][0],cputmax=2,tol=traj_tol)],randomize_t0s=False,fixed_color=objCols['traj']),
         ]
         current_traj = 0
         omega_tracker = ValueTracker(0.0)
@@ -838,7 +849,7 @@ class LenseThirringGL(Slide):
             nonlocal spin_axis, spin
             obj.rotate(dt*spin,axis=spin_axis)
         probe.add_updater(rot_around_spin)
-        probe_arr = mt.Arrow3D(start=(2,0,0),end=(2,0,0.5),tip_width_ratio = 0.3,tip_length = 0.1,shaft_width = 0.015,color=BLUE_D,depth_test=True)
+        probe_arr = mt.Arrow3D(start=(2,0,0),end=(2,0,0.5),tip_width_ratio = 0.3,tip_length = 0.1,shaft_width = 0.015,color=objCols['probe'],depth_test=True)
         probe_arr.rotate(precession_angle,axis=UP,about_point=(2,0,0))
         def rot_spin(obj,dt):
             nonlocal spin_axis, probe, precession
@@ -847,8 +858,8 @@ class LenseThirringGL(Slide):
             spin_axis = rotate_vector(spin_axis, dt*precession, axis=(0,0,-1))
         probe_arr.add_updater(rot_spin)
 
-        precession_arrow = mt.Arrow3D(start=(2,0,0),end=(2,0,0.462),tip_width_ratio = 0.3,tip_length = 0.1,shaft_width = 0.015,color=ORANGE,depth_test=True)
-        precession_circle = Circle(radius=0.191, color=YELLOW_E, fill_opacity=0.4, stroke_width=DEFAULT_STROKE_WIDTH).rotate(np.pi,axis=UP)
+        precession_arrow = mt.Arrow3D(start=(2,0,0),end=(2,0,0.462),tip_width_ratio = 0.3,tip_length = 0.1,shaft_width = 0.015,color=symCols[r'\vec{ \Omega }'],depth_test=True)
+        precession_circle = Circle(radius=0.191, color=symCols[r'\vec{ \Omega }'],stroke_color=symCols[r'\vec{ \Omega }'], fill_opacity=0.4, stroke_width=DEFAULT_STROKE_WIDTH).rotate(np.pi,axis=UP)
         precession_circle.move_to((2.0,0,0.462))
 
         #lines_2 = np.load('./assets/spacetime_sims/lt2d_lines__line_nums=20__subdivisions=100__timesteps=180__tau_max=9.0__R=1.0__M=1.0__omega=1.0.npy')
@@ -971,7 +982,7 @@ class LenseThirringGL(Slide):
 
 
         precession_arrow = mt.Arrow3D(start=(0,0,0),end=(0,0,0.462),tip_width_ratio = 0.3,tip_length = 0.1,shaft_width = 0.015,color=symCols[r'\vec{ \Omega }'],depth_test=True)
-        precession_circle = Circle(radius=0.191, color=symCols[r'\vec{ \Omega }'], fill_opacity=0.4, stroke_width=DEFAULT_STROKE_WIDTH).rotate(np.pi,axis=UP)
+        precession_circle = Circle(radius=0.191, color=symCols[r'\vec{ \Omega }'],stroke_color=symCols[r'\vec{ \Omega }'], fill_opacity=0.4, stroke_width=DEFAULT_STROKE_WIDTH).rotate(np.pi,axis=UP)
         precession_circle.move_to((0,0,0.462))
         self.play(ShowCreation(precession_arrow),ShowCreation(precession_circle))
         self.pause(loop=True)
@@ -980,6 +991,8 @@ class LenseThirringGL(Slide):
         for vecs in [torquevecs,posvecs,velvecs,forcevecs,probe_arr]:
             vecs.add_updater(lambda obj,dt: obj.rotate(dt*np.pi/4,axis=(0,0,-1),about_point=(0,0,0)))
         self.wait(8.0)
+        for vecs in [torquevecs,posvecs,velvecs,forcevecs,probe_arr]:
+            vecs.clear_updaters()
         self.pause()
         
 
@@ -995,25 +1008,25 @@ class LenseThirringGL(Slide):
         sphere = Sphere(radius=ltt.R)
         sphere = TexturedSurface(sphere, day_texture, night_texture,z_index=-10, depth_test=False).rotate(PI/2,LEFT)
         sphere.move_to((-0.2*FRAME_WIDTH,-0.5*FRAME_HEIGHT,-5))
-        probe = Sphere(color=BLUE_D,radius=0.8,z_index=-10)
+        probe = Sphere(color=objCols['probe'],radius=0.8,z_index=-10)
         probe.move_to((0.2*FRAME_WIDTH,-0.3*FRAME_HEIGHT,0))
         rS = mt.Arrow3D(sphere.get_center(), probe.get_center(), color=FRONTCOL, z_index=1, depth_test=False)
         rr = mt.Arrow3D(probe.get_center(), probe.get_center()+UP*0.7, color=FRONTCOL, z_index=1, depth_test=False)
         rG = mt.Arrow3D(sphere.get_center(), probe.get_center()+UP*0.7, color=FRONTCOL, z_index=1, depth_test=False)
-        rS_l = TexText(r'$r_S$',fix_in_frame=False).move_to(probe.get_center()+1.2*LEFT+0.3*DOWN)
-        rr_l = TexText(r'$r$',fix_in_frame=False).move_to(probe.get_center()+0.3*RIGHT+UP*0.3)
-        rG_l = TexText(r'$r_G$',fix_in_frame=False).move_to(probe.get_center()+1.3*LEFT+0.8*UP)
+        rS_l = TexText(r'$\vec{ r }_S$',fix_in_frame=False,isolate=[r'\vec{ r }']).move_to(probe.get_center()+1.2*LEFT+0.3*DOWN).set_color_by_tex_to_color_map(symCols,only_isolated=True)
+        rr_l = TexText(r'$\vec{ r }$',fix_in_frame=False,isolate=[r'\vec{ r }']).move_to(probe.get_center()+0.3*RIGHT+UP*0.3).set_color_by_tex_to_color_map(symCols,only_isolated=True)
+        rG_l = TexText(r'$\vec{ r }_G$',fix_in_frame=False,isolate=[r'\vec{ r }']).move_to(probe.get_center()+1.3*LEFT+0.8*UP).set_color_by_tex_to_color_map(symCols,only_isolated=True)
         allg = TexText("Allgemeiner für einen ausgedehnten Körper\n" + r'mit der Massendichte $\rho$:')
         allg_tex1 = TexText(r'$\frac{\mathrm{d} \vec{ L }}{\mathrm{d} t} = \int \mathrm{d}^3r\ \vec{ r }\times\vec{f}_{LT}$',isolate=[r'\vec{ L }',r'\vec{ r }']).set_color_by_tex_to_color_map(symCols,only_isolated=True)
-        allg_näh = TexText(r'Näherungen: $r_G\approx r_S$ und $\vec{ S }\cdot\vec{r}_G\approx\vec{ S }\cdot\vec{r}_S$', isolate=[r'\vec{ S }']).set_color_by_tex_to_color_map(symCols,only_isolated=True)
+        allg_näh = TexText(r'Näherungen: ${r}_G\approx {r}_S$ und $\vec{ S }\cdot\vec{ r }_G\approx\vec{ S }\cdot\vec{ r }_S$', isolate=[r'\vec{ S }',r'\vec{ r }']).set_color_by_tex_to_color_map(symCols,only_isolated=True)
         allg_tex2 = VGroup(
-            TexText(r'$\vec{f}_{LT} = \rho \vec{ v }\times\vec{ B }(\vec{ r }+\vec{r}_S)$',isolate=[r'\vec{ v }',r'\vec{ B }',r'\vec{ S }',r'\vec{ r }']).set_color_by_tex_to_color_map(symCols,only_isolated=True),
-            TexText(r'$= \frac{\rho}{r_S^3} \left[2 \vec{ v }\times\vec{ S } - \frac{6 (\vec{ S }\cdot\vec{r}_S)}{r_S^2}\vec{ v }\times (\vec{ r }+\vec{r}_S)\right]$',isolate=[r'\vec{ v }',r'\vec{ B }',r'\vec{ S }',r'\vec{ r }']).set_color_by_tex_to_color_map(symCols,only_isolated=True)).arrange()
+            TexText(r'$\vec{f}_{LT} = \rho \vec{ v }\times\vec{ B }(\vec{ r }+\vec{ r }_S)$',isolate=[r'\vec{ v }',r'\vec{ B }',r'\vec{ S }',r'\vec{ r }']).set_color_by_tex_to_color_map(symCols,only_isolated=True),
+            TexText(r'$= \frac{\rho}{{r}_S^3} \left[2 \vec{ v }\times\vec{ S } - \frac{6 (\vec{ S }\cdot\vec{ r }_S)}{{r}_S^2}\vec{ v }\times (\vec{ r }+\vec{ r }_S)\right]$',isolate=[r'\vec{ v }',r'\vec{ B }',r'\vec{ S }',r'\vec{ r }']).set_color_by_tex_to_color_map(symCols,only_isolated=True)).arrange()
         allg_tex3 = TexText(r'$\frac{\mathrm{d} \vec{ L }}{\mathrm{d} t} = \vec{ L }\times\vec{ \Omega }$',isolate=[r'\vec{ L }',r'\vec{ \Omega }']).set_color_by_tex_to_color_map(symCols,only_isolated=True)
-        allg_tex4 = TexText(r'$\vec{ \Omega } = \frac{\vec{ B }(\vec{ r }_S)}{2}$',isolate=[r'\vec{ \Omega }',r'\vec{ B }']).set_color_by_tex_to_color_map(symCols,only_isolated=True)
+        allg_tex4 = TexText(r'$\vec{ \Omega } = \frac{\vec{ B }(\vec{ r }_S)}{2}$',isolate=[r'\vec{ \Omega }',r'\vec{ B }',r'\vec{ r }']).set_color_by_tex_to_color_map(symCols,only_isolated=True)
         align_mobjs([(allg,),(allg_tex1,),(allg_näh,),(allg_tex2,),(allg_tex3,),(allg_tex4,)],self.slide_title)
         # add arrow from allg_tex1 to allg_tex3, shift allg_tex2 to right of that arrow
-        arr = Arrow(start=allg_tex1[6].get_edge_center(DOWN), end=allg_tex3[6].get_edge_center(UP), buff=0.1, color=FRONTCOL).fix_in_frame()
+        arr = Arrow(start=allg_tex1[6].get_edge_center(DOWN), end=allg_tex3[6].get_edge_center(UP), buff=0.1, fill_color=FRONTCOL).fix_in_frame()
         allg_tex2.shift(RIGHT)
         allg_näh.shift(RIGHT)
         self.play(Write(allg),ShowCreation(sphere),ShowCreation(probe),ShowCreation(rS),ShowCreation(rr),ShowCreation(rG),Write(rS_l),Write(rr_l),Write(rG_l))
@@ -1108,14 +1121,14 @@ class LenseThirringGL(Slide):
         self.play(self.wipe(self.get_non_canvas_mobjs(),[],return_animation=True))
         self.canvas_objs.remove(subtitle)
         self.pause()
-
+        
 
         texts = [
-            (0, ' ', r'Entsteht durch das Zerreißen eines Sterns durch das SL'),
-            (0, ' ', r'Rotationsachse der AK ist gekippt gegenüber der des SL'),
-            (0, ' ', r'Hochfrequentes Röntgen-Monitoring liefert Zeitreihe'),
-            (1, '[] ', r'$\sim 15$ Tage Periodizität in den ersten $\sim 130$ Tagen'),
-            (0, ' ', r'statistische Signifikanz über Monte-Carlo-Simulationen $>3.9\sigma$'),
+            #(0, ' ', r'Entsteht durch das Zerreißen\\eines Sterns durch das SL'),
+            (0, ' ', r'Rotationsachse der AK ist\\gekippt gegenüber der des SL'),
+            (0, ' ', r'Hochfrequentes Röntgen-Monitoring\\liefert Zeitreihe'),
+            (1, '[] ', r'$\sim 15$ Tage Periodizität\\in den ersten $\sim 130$ Tagen'),
+            (0, ' ', r'statistische Signifikanz über\\Monte-Carlo-Simulationen $>3.9\sigma$'),
             (1, '[] ', r'$\Rightarrow$ Lense-Thirring Präzession ist Ursache')
         ]
         Texts = BulletedList(*texts)
@@ -1124,6 +1137,22 @@ class LenseThirringGL(Slide):
         for text in Texts:
             self.play(Write(text))
             self.pause()
+
+
+        self.frame.reorient(0,60,0)
+        self.offset_3d.set_value(3.4+0j)
+        screen_space_shift(self.offset_3d,0)
+        (mobjs,vmobjs,updaters) = ms.make_akkretionsscheibe(col_arr=symCols[r'\vec{ L }'], col_path=symCols[r'\vec{ \Omega }'])
+        self.play(*[FadeIn(mob) for mob in mobjs],*[Write(vmob) for vmob in vmobjs])
+        self.pause(loop=True)
+
+
+        mobjs[0].add_updater(updaters[0])
+        mobjs[1].add_updater(updaters[1])
+        self.wait(10)
+        mobjs[0].remove_updater(updaters[0])
+        mobjs[1].remove_updater(updaters[1])
+        self.pause()
         
         
         self.setup_new_slide(title=r'Binärsystem aus Pulsar\\und weißem Zwerg',cleanup=True)
@@ -1178,14 +1207,16 @@ class LenseThirringGL(Slide):
         
         self.setup_new_slide(title='Zusammenfassung',cleanup=True)
         update_back_rects()
+        self.pause()
         texts = [
-            (0, ' ', 'Rotierende Massen erzeugen `Frame-dragging`'),
-            (0, ' ', 'Die linearisierte Dynamik lässt sich analog zur Elektrodynamik beschreiben'),
-            (0, ' ', 'Die Beobachtungen des Lense-Thirring-Effekts bestätigen die Allgemeine Relativitätstheorie')
+            (0, ' ', r'Rotierende Massen erzeugen\\`Frame-dragging`'),
+            (0, ' ', r'Die linearisierte Dynamik lässt sich\\analog zur Elektrodynamik beschreiben'),
+            (0, ' ', r'Die Beobachtungen\\des Lense-Thirring-Effekts\\bestätigen die Allgemeine Relativitätstheorie')
         ]
         Texts = BulletedList(*texts,buff=MED_LARGE_BUFF)
         Texts.to_edge(LEFT)
         Texts.fix_in_frame()
+
         for text in Texts:
             self.play(Write(text))
             self.pause()
@@ -1221,7 +1252,7 @@ class LenseThirringGL(Slide):
 
     def pause(self,notes="",loop=False, auto_next=False):
         #self.wait(0.1)
-        self.next_slide(loop=loop,notes=notes,auto_next=auto_next)
+        self.next_slide(loop=loop,notes=f"{self.slide_number_val}:{notes}",auto_next=auto_next)
 
     def next_slide_number_animation(self):
         self.slide_number_val += 1
@@ -1239,6 +1270,7 @@ class LenseThirringGL(Slide):
         )
 
     def setup_new_slide(self, title, cleanup=False, contents=None):
+        print(f"{self.slide_number_val}:{title}")
         if cleanup:
             self.play(
                 self.next_slide_number_animation(),
