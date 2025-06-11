@@ -93,7 +93,7 @@ DARK_MODE: bool = True
 LIGHT_MODE: bool = False # experimental
 OFFBLACK = rgb_to_color(hex_to_rgb("#121317"))
 OFFWHITE = rgb_to_color(hex_to_rgb("#F0F8FF"))
-Theme = LIGHT_MODE
+Theme = DARK_MODE
 BACKCOL = OFFBLACK if Theme else OFFWHITE
 FRONTCOL = OFFWHITE if Theme else OFFBLACK
 ms.set_theme(Theme)
@@ -1017,11 +1017,11 @@ class LenseThirringGL(Slide):
         rr_l = TexText(r'$\vec{ r }$',fix_in_frame=False,isolate=[r'\vec{ r }']).move_to(probe.get_center()+0.3*RIGHT+UP*0.3).set_color_by_tex_to_color_map(symCols,only_isolated=True)
         rG_l = TexText(r'$\vec{ r }_G$',fix_in_frame=False,isolate=[r'\vec{ r }']).move_to(probe.get_center()+1.3*LEFT+0.8*UP).set_color_by_tex_to_color_map(symCols,only_isolated=True)
         allg = TexText("Allgemeiner für einen ausgedehnten Körper\n" + r'mit der Massendichte $\rho$:')
-        allg_tex1 = TexText(r'$\frac{\mathrm{d} \vec{ L }}{\mathrm{d} t} = \int \mathrm{d}^3r\ \vec{ r }\times\vec{f}_{LT}$',isolate=[r'\vec{ L }',r'\vec{ r }']).set_color_by_tex_to_color_map(symCols,only_isolated=True)
-        allg_näh = TexText(r'Näherungen: ${r}_G\approx {r}_S$ und $\vec{ S }\cdot\vec{ r }_G\approx\vec{ S }\cdot\vec{ r }_S$', isolate=[r'\vec{ S }',r'\vec{ r }']).set_color_by_tex_to_color_map(symCols,only_isolated=True)
+        allg_tex1 = TexText(r'$\frac{\mathrm{d} \vec{ L }}{\mathrm{d} t} = \int \mathrm{d}^3{r}\ \vec{ r }\times\vec{f}_{LT}$',isolate=[r'\vec{ L }',r'\vec{ r }',r'{r}']).set_color_by_tex_to_color_map(symCols,only_isolated=True)
+        allg_näh = TexText(r'Näherungen: ${r}_G\approx {r}_S$ und $\vec{ S }\cdot\vec{ r }_G\approx\vec{ S }\cdot\vec{ r }_S$', isolate=[r'\vec{ S }',r'\vec{ r }', r'{r}']).set_color_by_tex_to_color_map(symCols,only_isolated=True)
         allg_tex2 = VGroup(
             TexText(r'$\vec{f}_{LT} = \rho \vec{ v }\times\vec{ B }(\vec{ r }+\vec{ r }_S)$',isolate=[r'\vec{ v }',r'\vec{ B }',r'\vec{ S }',r'\vec{ r }']).set_color_by_tex_to_color_map(symCols,only_isolated=True),
-            TexText(r'$= \frac{\rho}{{r}_S^3} \left[2 \vec{ v }\times\vec{ S } - \frac{6 (\vec{ S }\cdot\vec{ r }_S)}{{r}_S^2}\vec{ v }\times (\vec{ r }+\vec{ r }_S)\right]$',isolate=[r'\vec{ v }',r'\vec{ B }',r'\vec{ S }',r'\vec{ r }']).set_color_by_tex_to_color_map(symCols,only_isolated=True)).arrange()
+            TexText(r'$= \frac{\rho}{{r}_S^3} \left[2 \vec{ v }\times\vec{ S } - \frac{6 (\vec{ S }\cdot\vec{ r }_S)}{{r}_S^2}\vec{ v }\times (\vec{ r }+\vec{ r }_S)\right]$',isolate=[r'\vec{ v }',r'\vec{ B }',r'\vec{ S }',r'\vec{ r }',r'{r}']).set_color_by_tex_to_color_map(symCols,only_isolated=True)).arrange()
         allg_tex3 = TexText(r'$\frac{\mathrm{d} \vec{ L }}{\mathrm{d} t} = \vec{ L }\times\vec{ \Omega }$',isolate=[r'\vec{ L }',r'\vec{ \Omega }']).set_color_by_tex_to_color_map(symCols,only_isolated=True)
         allg_tex4 = TexText(r'$\vec{ \Omega } = \frac{\vec{ B }(\vec{ r }_S)}{2}$',isolate=[r'\vec{ \Omega }',r'\vec{ B }',r'\vec{ r }']).set_color_by_tex_to_color_map(symCols,only_isolated=True)
         align_mobjs([(allg,),(allg_tex1,),(allg_näh,),(allg_tex2,),(allg_tex3,),(allg_tex4,)],self.slide_title)
@@ -1114,7 +1114,7 @@ class LenseThirringGL(Slide):
 
 
         frame_img.add_updater(updater)
-        self.wait(14.0)
+        self.wait(8.0)
         self.pause(notes='Disk tearing wird vernachlässigt, da angenommen wird, dass die disk heiß genug ist, sodass warp waves für rigid body Präzession sorgen. Ansonsten Ringe mit unterschiedlichen Präzessionsgeschwindigkeiten.')
 
 
@@ -1216,9 +1216,17 @@ class LenseThirringGL(Slide):
         Texts = BulletedList(*texts,buff=MED_LARGE_BUFF)
         Texts.to_edge(LEFT)
         Texts.fix_in_frame()
+        prefix = './assets/zusm/'
+        suffix = '.png' if Theme else '_light.png'
+        frame_dragging = ImageMobject(prefix+'frame_dragging'+suffix, height=765/1080*FRAME_HEIGHT).fix_in_frame().shift(RIGHT*3.7)
+        Formulas = ImageMobject(prefix+'Formulas'+suffix, height=473/1080*FRAME_HEIGHT).fix_in_frame().shift(RIGHT*3.7)
+        BH = ImageMobject(prefix+'BH'+suffix, height=742/1080*FRAME_HEIGHT).fix_in_frame().shift(RIGHT*3.7)
+        imgs = [frame_dragging, Formulas, BH]
 
-        for text in Texts:
-            self.play(Write(text))
+        for i in range(3):
+            if i > 0:
+                self.play(FadeOut(imgs[i-1]))
+            self.play(Write(Texts[i]),FadeIn(imgs[i]))
             self.pause()
 
         
@@ -1229,7 +1237,7 @@ class LenseThirringGL(Slide):
             (0, ' ', r'J. Lense, H. Thirring, \textit{Phys. Z.} \textbf{19}, 156 (1918)'),
             (0, ' ', r'C. Misner, K. Thorne, \& J. Wheeler. - Gravitation (1973)'),
             (0, ' ', r'C.W.F. Everitt, B.W. Parkinson Gravity Probe B Science Results—NASA Final Report. (2009)'),
-            (0, ' ', r'D.R. Pasham, M. Zajaček, C.J. Nixon \textit{et al.} Lense-Thirring precession after a supermassive black hole disrupts a star. \textit{Nature} \textbf{630}, 325-328 (2024)'),
+            (0, ' ', r'D.R. Pasham \textit{et al.} Lense-Thirring precession after a supermassive black hole disrupts a star. \textit{Nature} \textbf{630}, 325-328 (2024)'),
             (0, ' ', r'V. Venkatraman Krishnan \textit{et al.} Lense-Thirring frame dragging induced by a fast-rotating white dwarf in a binary pulsar system. \textit{Science} \textbf{367}, 577-580 (2020)')
         ]
         Texts = BulletedList(*texts)
@@ -1347,5 +1355,9 @@ class LenseThirringGL(Slide):
         return frame_img, cap, frame_updater
 
 class LenseThirringLightGL(LenseThirringGL):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+class LT(LenseThirringGL):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

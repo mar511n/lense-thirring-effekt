@@ -225,3 +225,37 @@ class Akkretionsscheibe(ThreeDScene):
         mobjs[1].add_updater(updaters[1])
         self.wait(10)
         return super().construct()
+
+def make_riemann_tensor():
+    RT = TexText(r'$\tensor{R}{_\alpha_\beta^\mu_\nu}$')
+    return ((RT,),(),())
+
+class RiemannTensor(ThreeDScene):
+    def __init__(
+            self,
+            window = None,
+            camera_config: dict = dict(),
+            file_writer_config: dict = dict(),
+            skip_animations: bool = False,
+            always_update_mobjects: bool = False,
+            start_at_animation_number: int | None = None,
+            end_at_animation_number: int | None = None,
+            show_animation_progress: bool = False,
+            leave_progress_bars: bool = False,
+            preview_while_skipping: bool = True,
+            presenter_mode: bool = False,
+            default_wait_time: float = 1.0,
+    ):
+        camera_config['background_color'] = BLUE
+        camera_config['background_opacity'] = 0.1
+        camera_config['light_source_position'] = np.array([10, -10, 10])
+        camera_config['fps'] = 60
+        super().__init__(window, camera_config, file_writer_config, skip_animations, always_update_mobjects, start_at_animation_number, end_at_animation_number, show_animation_progress, leave_progress_bars, preview_while_skipping, presenter_mode, default_wait_time)
+    
+    def construct(self):
+        self.frame.reorient(0,0,0)
+        (mobjs,vmobjs,updaters) = make_riemann_tensor()
+        self.play(*[FadeIn(mob) for mob in mobjs],*[Write(vmob) for vmob in vmobjs])
+        #mobjs[0].add_updater(updaters[0])
+        #mobjs[1].add_updater(updaters[1])
+        return super().construct()
